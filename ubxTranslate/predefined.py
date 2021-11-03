@@ -1,6 +1,6 @@
 """Predefined message classes"""
 
-import core
+from ubxTranslate import core
 
 __all__ = ['ACK_CLS', 'NAV_CLS', 'RXM_CLS']
 

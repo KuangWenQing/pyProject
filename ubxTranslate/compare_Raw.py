@@ -1,7 +1,8 @@
-from SIM_Raw import get_epoch_raw_from_simulator
-from UBX_Raw import get_raw_word_from_ubx
+from simulator.SIM_Raw import get_epoch_raw_from_simulator
+from UBX_RXM import get_raw_word_from_ubx
 from threading import Thread
 import time
+import sys, os
 
 g_sow = 0
 g_dd = {}
@@ -13,8 +14,11 @@ stop_run = True
 
 def simulate_process(path_file: str):
     global g_dd, g_sow, stop_run
+    if not os.path.exists(path_file):
+        sys.exit(-1)
+    fd = open(path_file, 'r')
     print('simulate_process star')
-    for dd in get_epoch_raw_from_simulator(path_file):
+    for dd in get_epoch_raw_from_simulator(fd):
         while stop_run:
             time.sleep(0)
         if stop_run is None:
@@ -54,8 +58,14 @@ if __name__ == '__main__':
     ubx_file = "COM3_211028_042604_M8T.ubx"
     simulator_file = r"中央公园广场.RSIM_(M1B1-GPS_L1)_RawNav(20211028-1225).dat.TXT"
 
+    try:
+        fd_ubx = open(path + ubx_file, 'rb')
+    except:
+        print("open ", path + ubx_file, " error")
+        sys.exit(-1)
+
     sim = Thread(target=simulate_process, args=(path + simulator_file, ))
-    ubx = Thread(target=ubx_process, args=(path + ubx_file, ))
+    ubx = Thread(target=ubx_process, args=(fd_ubx, ))
     sim.start()
     ubx.start()
     sim.join()

@@ -38,21 +38,16 @@ def original_raw_to_words(original_raw: str) -> list:
     return ret
 
 
-def get_epoch_raw_from_simulator(path_file: str, begin_time=86400):
-    if not os.path.exists(path_file):
-        sys.exit(-1)
-    with open(path_file, 'r') as f:
-        for epoch_lines in search(f, begin_time, 15):
-            prn_words = {}      # {svID: [word1, word2, ... , word10]}
-            for row in epoch_lines:
-                ll = row.split()
-                prn_words[ll[1]] = original_raw_to_words(ll[6])
-            yield prn_words
+def get_epoch_raw_from_simulator(stream, begin_time=86400):
+    for epoch_lines in search(stream, begin_time, 15):
+        prn_words = {}      # {svID: [word1, word2, ... , word10]}
+        for row in epoch_lines:
+            ll = row.split()
+            prn_words[ll[1]] = original_raw_to_words(ll[6])
+        yield prn_words
     sys.exit()
 
 
-g_dd = {}
-sow = 0
 if __name__ == "__main__":
     # for msg in get_raw_word_from_ubx(path + ubx_file):
     #     print(msg)

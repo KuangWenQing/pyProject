@@ -355,7 +355,7 @@ class Parser:
         """Register a message  class."""
         self.classes[cls.id_] = cls
 
-    def receive_from(self, stream) -> namedtuple:
+    def receive_from(self, stream, target_cls=None, target_msg=None) -> namedtuple:
         """Receive a message from a stream and return as a namedtuple.
         raise IOError or ValueError on errors.
         """
@@ -380,8 +380,6 @@ class Parser:
         if msg_cls not in self.classes:
             return None
             # raise ValueError("Received unsupported message class of {:x}".format(msg_cls))
-        if msg_cls != 0x02:
-            return None
 
         if msg_id not in self.classes[msg_cls]:
             return None
@@ -393,9 +391,12 @@ class Parser:
         if len(buff) != (4 + length):
             raise IOError("A stream read returned {} bytes, expected {} bytes".format(
                 len(buff), 4 + length))
-
-        if msg_cls != 0x02 or msg_id != 0x13:
-            return None
+        if target_cls:
+            if msg_cls != target_cls:
+                return None
+            if target_msg:
+                if msg_id != target_msg:
+                    return None
 
         # Read the checksum
         checksum_sup = stream.read(2)
