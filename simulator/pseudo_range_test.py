@@ -4,7 +4,7 @@ use F9P test simulator Signal accuracy
 """
 
 import sys
-from collections import deque
+import matplotlib.pyplot as plt
 from ubxTranslate.UBX_RXM import get_epoch_RAWX_from_ubx
 from ubxTranslate.core import Parser
 from ubxTranslate.predefined import RXM_CLS
@@ -25,20 +25,37 @@ class ChannelUniformityTest:
             sys.exit(-1)
 
     def channel_uniformity(self):
-        """
-        通道一致性测试
+        """通道一致性测试: 两种判决标准
+        1、 [相邻历元所有通道伪距差  的 最大值 - 最小值] 对该列表求均值、中位数、 95%、 99%
+        2、 [相邻历元所有通道伪距差  的 标准差 ] 对该列表求均值、中位数、 95%、 99%
         """
         pr_diff_list = []
+        pr_std_list = []
         for d in get_epoch_RAWX_from_ubx(self.fd, GPS_SYS):
             pr_lst = []
             for k in d.keys():
                 pr_lst.append(d[k].prMes)
             pr_diff_list.append(max(pr_lst) - min(pr_lst))
-        max_pr_diff = max(pr_diff_list)
+            pr_std_list.append(np.std(pr_lst))
+
+        print("{:<10s} {:^11s} {:^11s} {:^11s} {:^11s}".format("判决方式", "mean", "mid", "95%", "99%"))
         mean_pr_diff = np.mean(pr_diff_list)
-        print("max diff pr = {:.4f}, time = {:.2f} ns".format(max_pr_diff, max_pr_diff / 0.3))
-        print("mean pr diff = {:.4f}, time = {:.2f} ns".format(mean_pr_diff, mean_pr_diff / 0.3))
-        print("std pr diff =", round(np.std(pr_diff_list), 4))
+        mid_pr_diff = np.median(pr_diff_list)
+        length = len(pr_diff_list)
+        pr_diff_list.sort()
+        pr_diff_list_95 = pr_diff_list[int(length * 0.95)]
+        pr_diff_list_99 = pr_diff_list[int(length * 0.99)]
+        print("{:<10s} {:^11.3f} {:^11.3f} {:^11.3f} {:^11.3f}".format("max - min",
+            mean_pr_diff, mid_pr_diff, pr_diff_list_95, pr_diff_list_99))
+
+        mean_pr_std = np.mean(pr_std_list)
+        mid_pr_std = np.std(pr_std_list)
+        length = len(pr_std_list)
+        pr_std_list.sort()
+        pr_std_list_95 = pr_std_list[int(length * 0.95)]
+        pr_std_list_99 = pr_std_list[int(length * 0.99)]
+        print("{:<10s} {:^11.3f} {:^11.3f} {:^11.3f} {:^11.3f}".format("std",
+            mean_pr_std, mid_pr_std, pr_std_list_95, pr_std_list_99))
 
 
 def get_all_pr_ca(stream, GNSS_SYS=GPS_SYS) -> list:
@@ -58,7 +75,7 @@ def get_all_pr_ca(stream, GNSS_SYS=GPS_SYS) -> list:
             return ret
 
 
-def compare_adjacent(l: list, ca_flag=True):
+def compare_adjacent_epoch_split_by_prn(l: list, ca_flag=True):
     """
     return {卫星号： [相邻伪距差]}, {卫星号: [相邻载波（个数）差]}
     """
@@ -75,31 +92,50 @@ def compare_adjacent(l: list, ca_flag=True):
         epoch_now: dict = l[i]
         epoch_next: dict = l[i + 1]
         for key in epoch_now.keys():
-            delta_pr[key].append(epoch_next[key][0] - epoch_now[key][0])
+            delta_pr[key].append(abs(epoch_next[key][0] - epoch_now[key][0]))
             if ca_flag:
-                delta_ca[key].append(epoch_next[key][1] - epoch_now[key][1])
+                delta_ca[key].append(abs(epoch_next[key][1] - epoch_now[key][1]))
     return delta_pr, delta_ca
+
+
+def compare_adjacent_epoch(l: list, ca_flag=True):
+    """
+    return [所有通道相邻历元伪距差 的均值], [所有通道相邻历元载波（个数）差 的均值]
+    """
+    length = len(l)
+    print("epoch total =", length)
+    assert isinstance(l[0], dict)
+    delta_pr_mean = []
+    delta_ca_mean = []
+    for key in l[0].keys():
+        assert isinstance(l[0][key], tuple)
+    for i in range(length - 1):
+        epoch_now: dict = l[i]
+        epoch_next: dict = l[i + 1]
+        diff_pr_epoch = []
+        diff_ca_epoch = []
+        for key in epoch_now.keys():
+            diff_pr_epoch.append(abs(epoch_next[key][0] - epoch_now[key][0]))
+            if ca_flag:
+                diff_ca_epoch.append(abs(epoch_next[key][1] - epoch_now[key][1]))
+        delta_pr_mean.append(np.mean(diff_pr_epoch))
+        if ca_flag:
+            delta_ca_mean.append(np.mean(diff_ca_epoch))
+    return delta_pr_mean, delta_ca_mean
 
 
 def clock_diff(_path_, _file_):
     """计算 ublox 钟差
     """
     fd_ubx = open(_path_ + _file_, 'rb')
-    delta_pr, _ = compare_adjacent(get_all_pr_ca(fd_ubx), False)
-    assert isinstance(delta_pr, dict)
-    all_chl_clock_diff = {}
-    for key in delta_pr.keys():
-        assert isinstance(delta_pr[key], list)
-        all_chl_clock_diff[key] = []
-    for key in delta_pr.keys():
-        for i in range(len(delta_pr[key]) - 1):
-            all_chl_clock_diff[key].append(delta_pr[key][i + 1] - delta_pr[key][i])
-
-    all_chl_clock_diff_mean = []
-    for key in all_chl_clock_diff.keys():
-        all_chl_clock_diff_mean.append(np.mean(all_chl_clock_diff[key]))
-
-    return np.mean(all_chl_clock_diff_mean)
+    delta_pr, _ = compare_adjacent_epoch(get_all_pr_ca(fd_ubx), False)
+    assert isinstance(delta_pr, list)
+    # clock_diff_lst = []
+    # for i in range(len(delta_pr) - 1):
+    #     clock_diff_lst.append(delta_pr[i + 1] - delta_pr[i])
+    plt.plot([x for x in range(len(delta_pr))], delta_pr, marker='x')
+    plt.show()
+    return np.mean(delta_pr)
 
 
 def diff_delta_pr_delta_ca(delta_pr: dict, delta_ca: dict) -> dict:
@@ -125,7 +161,7 @@ def pr_ca_control_accuracy(_path_, _file_):
     result = {"sv": [], "min": [], "max": [], "median": [],
               "mean": [], "std": [], "cnt": []}
     fd_ubx = open(_path_ + _file_, 'rb')
-    ret_pr, ret_ca = compare_adjacent(get_all_pr_ca(fd_ubx))
+    ret_pr, ret_ca = compare_adjacent_epoch_split_by_prn(get_all_pr_ca(fd_ubx))
     dd = diff_delta_pr_delta_ca(ret_pr, ret_ca)
     for key in dd.keys():
         result["sv"].append(key)
@@ -148,7 +184,7 @@ def pr_rate_of_change_accuracy(_path_, _file_, clock_diff, speed_set):
     fd_ubx = open(_path_ + _file_, 'rb')
     result = {"sv": [], "min": [], "max": [], "median": [],
               "mean": [], "std": [], "cnt": []}
-    delta_pr, _ = compare_adjacent(get_all_pr_ca(fd_ubx), False)
+    delta_pr, _ = compare_adjacent_epoch_split_by_prn(get_all_pr_ca(fd_ubx), False)
     pr_chane_rate = {}
     for key in delta_pr.keys():
         assert isinstance(delta_pr[key], list)
@@ -172,16 +208,18 @@ def pr_rate_of_change_accuracy(_path_, _file_, clock_diff, speed_set):
 
 
 if __name__ == "__main__":
-    path = r"D:\work\temp\1102" + "\\"
+    # path = r"D:\work\temp\1102" + "\\"
+    path = r"/home/kwq/work/lab_test/1104/"
     # path_file = r"/home/kwq/work/lab_test/1102/COM7_211102_101911_F9P.ubx"
     # path_file = r"D:\work\temp\1102\COM7_211103_021622_satellite_fix_speed.ubx"
-    file = r"COM7_211102_101911_F9P.ubx"
-    file_move = "COM7_211103_021622_satellite_fix_speed.ubx"
+    # file = r"COM7_211102_101911_F9P.ubx"
+    file = "COM14___115200_211104_082229_fixPR.ubx"
+    file_move = "COM14___115200_211104_085043_satellite_speed1000.ubx"
 
     test = ChannelUniformityTest(path + file)
     test.channel_uniformity()
 
     pr_ca_control_accuracy(path, file)
-    clk_diff = clock_diff(path, file)
 
+    clk_diff = clock_diff(path, file)
     pr_rate_of_change_accuracy(path, file_move, clk_diff, 1000)
