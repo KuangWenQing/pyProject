@@ -13,6 +13,7 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 GPS_SYS = 0
+BDS_SYS = 3
 
 
 def print_mean_mid_95_99(ll: list, head="通道一致性", tail="max - min"):
@@ -21,6 +22,7 @@ def print_mean_mid_95_99(ll: list, head="通道一致性", tail="max - min"):
     assert length > 0
     mean_ll = np.mean(ll)
     mid_ll = np.median(ll)
+    ll.sort()
     list_95 = ll[int(length * 0.95)]
     list_99 = ll[int(length * 0.99)]
     print("{:<20s} {:>11.3f} {:>11.3f} {:>11.3f} {:>11.3f} {:^33s}".format(
@@ -36,22 +38,22 @@ class ChannelUniformityTest:
             print("open ", dir_file, " error")
             sys.exit(-1)
 
-    def channel_uniformity(self):
+    def channel_uniformity(self, satellite_sys):
         """通道一致性测试: 两种判决标准
         1、 [相邻历元所有通道伪距差  的 最大值 - 最小值] 对该列表求均值、中位数、 95%、 99%
         2、 [相邻历元所有通道伪距差  的 标准差 ] 对该列表求均值、中位数、 95%、 99%
         """
         pr_diff_list = []
         pr_std_list = []
-        for d in get_epoch_RAWX_from_ubx(self.fd, GPS_SYS):
+        for d in get_epoch_RAWX_from_ubx(self.fd, satellite_sys):
             pr_lst = []
             for k in d.keys():
                 pr_lst.append(d[k].prMes)
             pr_diff_list.append(max(pr_lst) - min(pr_lst))
             pr_std_list.append(np.std(pr_lst))
 
-        print_mean_mid_95_99(pr_diff_list)
         print_mean_mid_95_99(pr_std_list, "通道一致性", "std")
+        print_mean_mid_95_99(pr_diff_list)
 
 
 def get_all_pr_ca(stream, GNSS_SYS=GPS_SYS) -> list:
@@ -120,11 +122,11 @@ def compare_adjacent_epoch(l: list, ca_flag=True):
     return delta_pr_mean, delta_ca_mean
 
 
-def clock_diff(_path_, _file_):
+def clock_diff(_path_, _file_, satellite_sys):
     """计算 ublox 钟漂
     """
     fd_ubx = open(_path_ + _file_, 'rb')
-    delta_pr, _ = compare_adjacent_epoch(get_all_pr_ca(fd_ubx), False)
+    delta_pr, _ = compare_adjacent_epoch(get_all_pr_ca(fd_ubx, satellite_sys), False)
     assert isinstance(delta_pr, list)
     # clock_diff_lst = []
     # for i in range(len(delta_pr) - 1):
@@ -206,10 +208,10 @@ def clock_diff(_path_, _file_):
 #     book.save(_path_ + "pr_change_rate_accuracy.xlsx")
 
 
-def pr_rate_of_change_accuracy(_path_, _file_, clk_diff, speed_set):
+def pr_rate_of_change_accuracy(_path_, _file_, satellite_sys, clk_diff, speed_set):
     """伪距变化率"""
     fd_ubx = open(_path_ + _file_, 'rb')
-    l = get_all_pr_ca(fd_ubx)
+    l = get_all_pr_ca(fd_ubx, satellite_sys)
     length = len(l)
     assert isinstance(l[0], dict)
     max_diff_delta_pr_diff_clk_speed = []
@@ -221,14 +223,15 @@ def pr_rate_of_change_accuracy(_path_, _file_, clk_diff, speed_set):
         epoch_next: dict = l[i + 1]
         delta_pr_diff_clk_speed = []
         for key in epoch_now.keys():
-            delta_pr = abs(epoch_next[key][0] - epoch_now[key][0])
-            delta_pr_diff_clk_speed.append(delta_pr + clk_diff - speed_set)
+            if key in epoch_next.keys():
+                delta_pr = abs(epoch_next[key][0] - epoch_now[key][0])
+                delta_pr_diff_clk_speed.append(delta_pr + clk_diff - speed_set)
 
         max_diff_delta_pr_diff_clk_speed.append(max(delta_pr_diff_clk_speed) - min(delta_pr_diff_clk_speed))
         std_delta_pr_diff_clk_speed.append(np.std(delta_pr_diff_clk_speed))
 
-    print_mean_mid_95_99(max_diff_delta_pr_diff_clk_speed, "伪距变化率", "max-min")
     print_mean_mid_95_99(std_delta_pr_diff_clk_speed, "伪距变化率", "std")
+    print_mean_mid_95_99(max_diff_delta_pr_diff_clk_speed, "伪距变化率", "max-min")
 
 
 def max_diff_and_std_epoch_diff_delta_pr_delta_ca(l: list, frequency=1575420000):
@@ -255,30 +258,39 @@ def max_diff_and_std_epoch_diff_delta_pr_delta_ca(l: list, frequency=1575420000)
     return max_diff_diff_pr_ca, std_diff_pr_ca
 
 
-def pr_ca_control_accuracy_prn(_path_, _file_):
+def pr_ca_control_accuracy_prn(_path_, _file_, satellite_sys):
     """
     载波相位控制精度
     """
     fd_ubx = open(_path_ + _file_, 'rb')
-    max_diff, std = max_diff_and_std_epoch_diff_delta_pr_delta_ca(get_all_pr_ca(fd_ubx), 1575420000)
-    print_mean_mid_95_99(max_diff, "PR-CA控制精度", "[epoch_max_diff[prn_deltaPR - prn_deltaCA]]")
+    max_diff, std = max_diff_and_std_epoch_diff_delta_pr_delta_ca(get_all_pr_ca(fd_ubx, satellite_sys), 1575420000)
+
     print_mean_mid_95_99(std, "PR-CA控制精度", "[epoch_std[prn_deltaPR - prn_deltaCA]]")
+    print_mean_mid_95_99(max_diff, "PR-CA控制精度", "[epoch_max_diff[prn_deltaPR - prn_deltaCA]]")
 
 
 if __name__ == "__main__":
     # path = r"D:\work\temp\1102" + "\\"
-    path = r"/home/kwq/work/lab_test/1104/"
+    # path = r"E:\work\ublox_log\1104" + "\\"
+    path = r"E:\work\ublox_log\1105\B1I" + "\\"
+    # path = r"E:\work\ublox_log\1105\L1CA" + "\\"
     # path_file = r"/home/kwq/work/lab_test/1102/COM7_211102_101911_F9P.ubx"
     # path_file = r"D:\work\temp\1102\COM7_211103_021622_satellite_fix_speed.ubx"
     # file = r"COM7_211102_101911_F9P.ubx"
-    file = "COM14___115200_211104_082229_fixPR.ubx"
-    file_move = "COM14___115200_211104_085043_satellite_speed1000.ubx"
+    file = "COM14___115200_211105_055226_fixPR.ubx"
+    file_move = "COM14___9600_211105_070015_satellite_speed10.ubx"
+    # file = "COM14___9600_211105_072518_fixPR.ubx"
+    # file_move = "COM14___9600_211105_074623_satellite_speed10.ubx"
+
+    # s_sys = GPS_SYS
+    s_sys = BDS_SYS
+
     print("{:<20s} {:>12s} {:>12s} {:>12s} {:>12s} {:^12s}".format("项目", "mean", "mid", "95%", "99%", "判决方式"))
     test = ChannelUniformityTest(path + file)
-    test.channel_uniformity()
+    test.channel_uniformity(s_sys)
 
-    pr_ca_control_accuracy_prn(path, file)
+    pr_ca_control_accuracy_prn(path, file, s_sys)
 
-    clk_diff_mean, clk_diff_std = clock_diff(path, file)
+    clk_diff_mean, clk_diff_std = clock_diff(path, file, s_sys)
     print("钟漂 mean =", clk_diff_mean, "  std =", clk_diff_std)
-    pr_rate_of_change_accuracy(path, file_move, clk_diff_mean, 1000)
+    pr_rate_of_change_accuracy(path, file_move, s_sys, clk_diff_mean, 1000)

@@ -2,6 +2,7 @@ from ubxTranslate.core import Parser
 from ubxTranslate.predefined import RXM_CLS, NAV_CLS
 import sys
 GPS_ID = 0
+BDS_ID = 3
 
 path_file = r"/home/kwq/work/lab_test/1102/COM7_211102_101911_F9P.ubx"
 
