@@ -16,19 +16,20 @@ def dynamic_fd(p: str, file_lst: list):
         exec('fd_{}={}'.format(sv_id, open(p + f, 'r')))
 
 
-def search(lines, time_sec_of_week, history=15):
+def search(lines, time_sec_of_week, GNSS_SYS=0, history=15):
+    satellite_sys_time_step = {0: 6, 3: 18000}
     time_sow = str(time_sec_of_week)
     previous_lines = deque(maxlen=history)
     for line in lines:
         if time_sow != line.split()[5]:
             yield previous_lines
             previous_lines.clear()
-            time_sow = str(int(time_sow) + 6)
+            time_sow = str(int(time_sow) + satellite_sys_time_step[GNSS_SYS])
         previous_lines.append(line)
     sys.exit()
 
 
-def original_raw_to_words(original_raw: str) -> list:
+def gps_original_raw_to_words(original_raw: str) -> list:
     ret = []
     if len(original_raw) != 75:
         return ret
@@ -38,14 +39,17 @@ def original_raw_to_words(original_raw: str) -> list:
     return ret
 
 
-def get_epoch_raw_from_simulator(stream, begin_time=86400):
-    for epoch_lines in search(stream, begin_time, 15):
+def get_epoch_raw_from_simulator(stream, begin_time=86400, sys=0, length=18):
+    for epoch_lines in search(stream, begin_time, sys, length):
         prn_words = {}      # {svID: [word1, word2, ... , word10]}
         for row in epoch_lines:
             ll = row.split()
-            prn_words[ll[1]] = original_raw_to_words(ll[6])
+            if sys == 0:
+                prn_words[ll[1]] = gps_original_raw_to_words(ll[6])
+            else:
+                prn_words[ll[1]] = (int(ll[5][:-3]), ll[6])    # 时间精度是 ms
         yield prn_words
-    sys.exit()
+    # sys.exit()
 
 
 if __name__ == "__main__":
