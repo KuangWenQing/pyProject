@@ -37,6 +37,8 @@ def hxxt_process(path_file):
     global g_dd, g_sow, event, error_bits, total_bits, stop_run
     with open(path_file) as fd:
         for row in fd:
+            if not row.startswith("#RAWBD3SUBFRAMEA"):
+                continue
             _, info_str = row.split(";")
             info_str, _crc_ = info_str.split("*")
             info = info_str.split(',')
@@ -48,6 +50,8 @@ def hxxt_process(path_file):
             while sow > g_sow:
                 event.set()
                 semaphore.acquire()  # 等待 信号量
+                if stop_run:
+                    sys.exit()
                 event.clear()
 
             if sow < g_sow:
@@ -56,7 +60,7 @@ def hxxt_process(path_file):
                 assert sv_id in g_dd.keys()
                 sim_raw_int = int(g_dd[sv_id][1], 16) >> 2
                 # 模拟器将第一个字设为全0， 第一个字占 14 bit
-                if (origin_raw_int & (0x3fff << 864)) != (sim_raw_int & (0x3fff << 864)):
+                if (origin_raw_int & ~(0x3fff << 864)) != (sim_raw_int & ~(0x3fff << 864)):
                     sim_raw_str = "{:0878b}".format(sim_raw_int)
                     origin_raw_str = "{:0878b}".format(origin_raw_int)
                     # 第一个字不用对比， 第二个字的 校验位(最后24bit)不用对比
@@ -77,28 +81,31 @@ def hxxt_process(path_file):
     event.set()
 
 
-def simulate_process(path_file: str):
+def simulate_process(path_file: str, begin_time=518400000):
     global g_dd, g_sow, event, stop_run
     if not os.path.exists(path_file):
         sys.exit(-1)
     fd = open(path_file, 'r')
     print('simulate_process star')
-    for dd in get_epoch_raw_from_simulator(fd, 518400000, BDS_SYS):
+    for dd in get_epoch_raw_from_simulator(fd, begin_time, BDS_SYS):
         event.wait()  # 等待事件
         if stop_run:
             sys.exit()
         key_list = list(dd.keys())
         g_sow = dd[key_list[0]][0]
+
         g_dd = dd
         semaphore.release()  # 释放 信号量
+    stop_run = True
+    semaphore.release()  # 释放 信号量
 
 
 if __name__ == "__main__":
-    path = r"D:\work\temp\1108" + "\\"
-    sim_file = r"usrfix_116_40.RSIM_(M3B1-BD2_B1C2)_RawNav(20211108-1005).dat.TXT"
-    hxxt_file = "hxxt_raw.log"
+    path = r"D:\work\temp\1113" + "\\"
+    sim_file = r"user_fix.rsim_(M3B1-BD2_B1C2)_RawNav(20211113-1106).dat.TXT"
+    hxxt_file = "hxxt_pwr_137.log"
 
-    sim = threading.Thread(target=simulate_process, args=(path + sim_file, ))
+    sim = threading.Thread(target=simulate_process, args=(path + sim_file, 86418000))
     hxxt = threading.Thread(target=hxxt_process, args=(path + hxxt_file, ))
     sim.start()
     hxxt.start()

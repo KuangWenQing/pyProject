@@ -43,7 +43,7 @@ def ubx_process(path_file: str):
             sow = (words[1] & 0x3fffffff) >> 13
             while sow > g_sow:
                 event.set()
-                semaphore.acquire()  # 等待 信号量
+                semaphore.acquire()  # 等待获取信号量
                 event.clear()
 
             if sow < g_sow:

@@ -18,15 +18,17 @@ def dynamic_fd(p: str, file_lst: list):
 
 def search(lines, time_sec_of_week, GNSS_SYS=0, history=15):
     satellite_sys_time_step = {0: 6, 3: 18000}
-    time_sow = str(time_sec_of_week)
+    time_sow = time_sec_of_week
     previous_lines = deque(maxlen=history)
     for line in lines:
-        if time_sow != line.split()[5]:
+        if time_sow == time_sec_of_week:
+            time_sow = int(line.split()[5])
+        if time_sow != int(line.split()[5]):
             yield previous_lines
             previous_lines.clear()
-            time_sow = str(int(time_sow) + satellite_sys_time_step[GNSS_SYS])
+            time_sow = int(time_sow) + satellite_sys_time_step[GNSS_SYS]
         previous_lines.append(line)
-    sys.exit()
+    # sys.exit()
 
 
 def gps_original_raw_to_words(original_raw: str) -> list:
