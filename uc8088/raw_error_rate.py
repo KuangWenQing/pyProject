@@ -3,6 +3,7 @@
 import re
 import os
 import sys
+import time
 import numpy as np
 from simulator.SIM_Raw import get_epoch_raw_from_simulator
 from threading import Thread, Condition, Semaphore
@@ -10,30 +11,26 @@ condition = Condition()
 semaphore = Semaphore(0)
 
 
-def hex_to_bit(string):
-    temp = bin(int(string, base=16))[2:]
-    while len(temp) < 32:
-        temp = '0' + temp
-    return temp
-
-
-def simulate_process(path_file: str):
+def simulate_process(path_file: str, begin_time=86400):
     global g_dd, g_sow, stop_run, condition, semaphore
     if not os.path.exists(path_file):
         sys.exit(-1)
     fd = open(path_file, 'r')
     semaphore.acquire()  # 等待获取信号量
-    print('simulate_process star')
-    for dd in get_epoch_raw_from_simulator(fd):
+    # print('simulate_process star')
+    for dd in get_epoch_raw_from_simulator(fd, begin_time):
         semaphore.acquire()  # 等待获取信号量
         condition.acquire()  # 尝试获得锁， 没有获得就阻塞在此
         if stop_run:
-            sys.exit()
+            break
         key_list = list(dd.keys())
         g_sow = (dd[key_list[0]][1] >> 13) * 6
         g_dd = dd
         condition.notify()      # 提醒其它线程有锁将要释放
         condition.release()     # 释放锁
+    fd.close()
+    condition.notify()  # 提醒其它线程有锁将要释放
+    condition.release()  # 释放锁
 
 
 def uc8088_process(path_file: str):
@@ -44,9 +41,9 @@ def uc8088_process(path_file: str):
     crc_row_mark = re.compile(r'sv\d+ crc:')
     chl_time_mark = "CHL TIME"
     condition.acquire()  # 尝试获得锁， 没有获得就阻塞在此
-    print("uc8088_process running!")
+    # print("uc8088_process running!")
     semaphore.release()  # 释放 信号量
-    with open(path_file, encoding="ISO-8859-1") as fd:
+    with open(path_file, 'r') as fd:
         for row in fd:
             row_cnt += 1
             if crc_row_mark.match(row) and compare_flag:
@@ -59,13 +56,14 @@ def uc8088_process(path_file: str):
                     if word_lst[i] & ~0x3f != g_dd[sv_id][i] & ~0x3f:
                         uc_word_bit_str = "{:030b}".format(word_lst[i])
                         sim_word_bit_str = "{:030b}".format(g_dd[sv_id][i])
-                        print("word {:d}  uc = {:s}   sim = {:s}".format(i, uc_word_bit_str, sim_word_bit_str))
+                        # print("word {:d}  uc = {:s}   sim = {:s}".format(i, uc_word_bit_str, sim_word_bit_str))
                         for idx in range(24):
                             if uc_word_bit_str[idx] != sim_word_bit_str[idx]:
                                 err_total += 1
                 if err_total > temp_:
-                    print("the %d line error %d bits" % (row_cnt, err_total - temp_))
-                    print(row)
+                    # print("the %d line error %d bits" % (row_cnt, err_total - temp_))
+                    # print(row)
+                    continue
             elif row.startswith(chl_time_mark):
                 chl_time_row_lst = row.split(',')
                 chl_time = round(int(chl_time_row_lst[1]) / 1000)
@@ -86,18 +84,21 @@ def uc8088_process(path_file: str):
 
 
 if __name__ == "__main__":
-    path = r"D:\work\lab_test\1115" + "\\"
-    file_8088 = "1_mdltcxo_raw_test.log"
-    file_sim = r"user_fix.rsim_(M4B1-GPS_L1)_RawNav(20211113-1106).dat.TXT"
-    g_dd, g_sow = {}, 0
-    err_total, crc_total, stop_run = 0, 0, 0
-    sim = Thread(target=simulate_process, args=(path + file_sim,))
-    ubx = Thread(target=uc8088_process, args=(path + file_8088,))
-    ubx.start()
-    sim.start()
-    sim.join()
-    ubx.join()
+    path = r"D:\work\lab_test\gnss_acq_parameter_test\1111" + "\\"
+    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log")]
+    # file_8088_lst = ["2_mdl_new8_acqThre_nct20coh9_-144_gps_dopp10_10_0_0_para83_69_42_22_0_22_12_1_10_32_1163918_rxsc0_SLVL3.log",]
+    dir_sim_file = r"D:\work\lab_test\gnss_acq_parameter_test\fix_pr_1e7.RSIM_(M1B1-GPS_L1)_RawNav(20211116-1959).dat.TXT"
+    for file in file_8088_lst:
+        g_dd, g_sow = {}, 0
+        err_total, crc_total, stop_run = 0, 0, 0
+        sim = Thread(target=simulate_process, args=(dir_sim_file, 518400))
+        ubx = Thread(target=uc8088_process, args=(path + file,))
+        sim.start()
+        ubx.start()
 
-    # uc8088_process(path + file_8088)
-    # simulate_process(path + file_sim)
-    print("err_total = {:d}  crc_total = {:d}  error rate = {:.3%}".format(err_total, crc_total, err_total/crc_total))
+        sim.join()
+        ubx.join()
+
+        print(file)
+        print("err_total = {:d}  crc_total = {:d}  error rate = {:.3%} \n".format(err_total, crc_total, err_total/crc_total))
+
