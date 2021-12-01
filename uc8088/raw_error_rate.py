@@ -88,11 +88,16 @@ def uc8088_process(path_file: str):
     stop_run = 1
 
 
+
 if __name__ == "__main__":
-    path = r"D:\work\lab_test\gnss_acq_parameter_test\1111" + "\\"
-    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log")]
-    # file_8088_lst = ["2_mdl_new8_acqThre_nct20coh9_-144_gps_dopp10_10_0_0_para83_69_42_22_0_22_12_1_10_32_1163918_rxsc0_SLVL3.log",]
-    dir_sim_file = r"D:\work\lab_test\gnss_acq_parameter_test\fix_pr_1e7.RSIM_(M1B1-GPS_L1)_RawNav(20211116-1959).dat.TXT"
+    # path = r"D:\work\lab_test\gnss_acq_parameter_test\1111" + "\\"
+    path = r"/home/ucchip/KWQ/gps_test/1130/"
+    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log") and ("1_md" not in f) ]  # and (f.startswith("19") or f.startswith("20"))]
+    file_8088_lst.sort()
+    # file_8088_lst = ["15_mdl_new_acqThre_nct20coh9_-147_gps_dopp10_10_0_0_para83_69_42_22_0_16_12_1_10_32_1163918_rxsc16_SLVL2.log", "16_mdl_new8_acqThre_nct20coh9_-147_gps_dopp10_10_0_0_para83_69_42_22_0_16_12_1_10_32_1163918_rxsc16_SLVL2.log"]
+    # file_8088_lst = ["6_mdl_new8_acqThre_nct18coh9_-142_gps_dopp10_10_0_0_para83_69_42_25_0_22_12_1_10_32_1163918_rxsc40_SLVL2.log"]
+    # file_8088_lst = ["6_mdl_new8_acqThre_nct18coh9_-142_gps_dopp10_10_0_0_para83_69_42_25_0_22_12_1_10_32_1163918_rxsc40_SLVL2.log",]
+    dir_sim_file = r"/home/ucchip/KWQ/gps_test/fix_pr_1e7.RSIM_(M1B1-GPS_L1)_RawNav(20211116-1959).dat.TXT"
     for file in file_8088_lst:
         g_dd, g_sow = {}, 0
         err_bits, data_bits, err_word, err_word_Misjudgment, stop_run = 0, 0, 0, 0, 0
@@ -105,8 +110,11 @@ if __name__ == "__main__":
         ubx.join()
 
         print(file)
-        print("err_bits = {:d}  data_bits = {:d}  error bits rate = {:.3%}"
-              .format(err_bits, data_bits, err_bits / data_bits))
-        print("err_word_Misjudgment = {:d}  err_word = {:d}  error word Misjudgment rate = {:.3%} \n"
-              .format(err_word_Misjudgment, err_word, err_word_Misjudgment / err_word))
-
+        if data_bits:
+            print("err_bits = {:d}  data_bits = {:d}  error bits rate = {:.3%}"
+                  .format(err_bits, data_bits, err_bits / data_bits))
+        if err_word:
+            print("err_word_Misjudgment = {:d}  err_word = {:d}  error word Misjudgment rate = {:.3%} \n".
+                  format(err_word_Misjudgment, err_word, err_word_Misjudgment / err_word))
+        else:
+            print("err_word = 0\n")
