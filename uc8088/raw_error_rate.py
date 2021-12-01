@@ -34,7 +34,7 @@ def simulate_process(path_file: str, begin_time=86400):
 
 
 def uc8088_process(path_file: str):
-    global err_total, crc_total, condition, semaphore, stop_run
+    global err_bits, data_bits, condition, semaphore, stop_run, err_word, err_word_Misjudgment
     row_cnt = 0
     chl_time = -1
     compare_flag = False
@@ -49,18 +49,23 @@ def uc8088_process(path_file: str):
             if crc_row_mark.match(row) and compare_flag:
                 sv_id = str(int(row[2:4]) + 1)
                 crc_row_lst = row[row.index(':')+1:].split()
-                word_lst = [int(item, 16) & 0x3fffffff for item in crc_row_lst]
-                temp_ = err_total
+                # word_lst = [int(item, 16) & 0x3fffffff for item in crc_row_lst]
+                word_lst = [int(item, 16) for item in crc_row_lst]
+                temp_ = err_bits
                 for i in range(10):
-                    crc_total += 24  # 一个字共有30 个bit ，数据位占24 bit，校验位占6bit
-                    if word_lst[i] & ~0x3f != g_dd[sv_id][i] & ~0x3f:
+                    data_bits += 24     # 一个字共有30 个bit ，数据位占24 bit，校验位占6bit
+                    # 字正确时，高2bit置1 补齐 4个字节, 所以要去掉高2bit
+                    if word_lst[i] & 0x3fffffc0 != g_dd[sv_id][i] & ~0x3f:
+                        err_word += 1
+                        if word_lst[i] >> 30 == 3:
+                            err_word_Misjudgment += 1                  # 错误的帧 误判了
                         uc_word_bit_str = "{:030b}".format(word_lst[i])
                         sim_word_bit_str = "{:030b}".format(g_dd[sv_id][i])
                         # print("word {:d}  uc = {:s}   sim = {:s}".format(i, uc_word_bit_str, sim_word_bit_str))
                         for idx in range(24):
                             if uc_word_bit_str[idx] != sim_word_bit_str[idx]:
-                                err_total += 1
-                if err_total > temp_:
+                                err_bits += 1
+                if err_bits > temp_:
                     # print("the %d line error %d bits" % (row_cnt, err_total - temp_))
                     # print(row)
                     continue
@@ -90,7 +95,7 @@ if __name__ == "__main__":
     dir_sim_file = r"D:\work\lab_test\gnss_acq_parameter_test\fix_pr_1e7.RSIM_(M1B1-GPS_L1)_RawNav(20211116-1959).dat.TXT"
     for file in file_8088_lst:
         g_dd, g_sow = {}, 0
-        err_total, crc_total, stop_run = 0, 0, 0
+        err_bits, data_bits, err_word, err_word_Misjudgment, stop_run = 0, 0, 0, 0, 0
         sim = Thread(target=simulate_process, args=(dir_sim_file, 518400))
         ubx = Thread(target=uc8088_process, args=(path + file,))
         sim.start()
@@ -100,5 +105,8 @@ if __name__ == "__main__":
         ubx.join()
 
         print(file)
-        print("err_total = {:d}  crc_total = {:d}  error rate = {:.3%} \n".format(err_total, crc_total, err_total/crc_total))
+        print("err_bits = {:d}  data_bits = {:d}  error bits rate = {:.3%}"
+              .format(err_bits, data_bits, err_bits / data_bits))
+        print("err_word_Misjudgment = {:d}  err_word = {:d}  error word Misjudgment rate = {:.3%} \n"
+              .format(err_word_Misjudgment, err_word, err_word_Misjudgment / err_word))
 
