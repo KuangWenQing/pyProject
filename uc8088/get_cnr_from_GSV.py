@@ -15,10 +15,10 @@ def find_first_acq_time_and_first_fix_time(dir_file: str):
                 gga = row
                 if power_on_flag == 0 and "E,1," not in row:
                     power_on_flag = 1
-                    print("power on , row cnt =", row_cnt)
+                    print('\033[1;31m' + "power on , row cnt = {}".format(row_cnt) + '\033[0m')
                     print(row)
                 if power_on_flag == 9 and "E,1," in row:
-                    print("first fix row cnt = ", row_cnt)
+                    print('\033[1;32m' + "first fix row cnt = {}".format(row_cnt) + '\033[0m')
                     print(gga)
                     # sys.exit(0)
                     return
@@ -30,8 +30,8 @@ def find_first_acq_time_and_first_fix_time(dir_file: str):
                 ret = row[:row.index("*")].split(',')
                 for i in cnr_idx:
                     if ret[i]:
-                        print(gga)
-                        print("first acq row cnt = ", row_cnt)
+                        print(gga, end='')
+                        print('\033[1;33m' + "first acq row cnt = {}".format(row_cnt) + '\033[0m')
                         print(row)
                         power_on_flag = 9
                         break
