@@ -19,8 +19,6 @@ def calc_adjacent_ACQ_SPEC_time(_dir_file_: str)->list:
     return _sub_ir_
 
 
-print('asd')
-
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("usage: \n"
@@ -29,7 +27,8 @@ if __name__ == "__main__":
     sub_ir = calc_adjacent_ACQ_SPEC_time(sys.argv[1])
     # print(sub_ir)
     if sub_ir:
-        print("ACQ time (median) = %d , (std) = %f" % (np.median(sub_ir),  np.std(sub_ir)))
+        print('\033[1;33m' + "ACQ time (median) = {} , (std) = {}".format(np.median(sub_ir),  np.std(sub_ir))
+              + '\033[0m')
     else:
         print("ACQ time (median) = 0 , (std) = 0")
 
