@@ -78,18 +78,18 @@ def cold_start_analysis(dir_file: str, initial_signal_intensity=-148):
 
                 if get_time_flag == 0:
                     sec_of_day = get_sec_of_day_from_gga(row)
-                    if sec_of_day < get_sec_of_day_from_gga(q[0]):
+                    if sec_of_day == 0:
+                        continue
+                    if sec_of_day < get_sec_of_day_from_gga(q[0]) or get_sec_of_day_from_gga(q[0]) == 0:
                         get_time_flag = 1
-                        initial_signal_intensity += sec_of_day // 600
-                        print('\033[1;33m' + "{} dB get time , row cnt = {}".format(initial_signal_intensity, row_cnt)
-                              + '\033[0m')
+                        print('\033[1;33m' + "{} dB get time , row cnt = {}".
+                              format(initial_signal_intensity + sec_of_day // 600, row_cnt) + '\033[0m')
                         print(row)
                 elif get_time_flag == 1:
                     if "E,1," in row:
                         sec_of_day = get_sec_of_day_from_gga(row)
-                        initial_signal_intensity += sec_of_day // 600
-                        print('\033[1;32m' + "{} dB fixed, row cnt = {}".format(initial_signal_intensity, row_cnt)
-                              + '\033[0m')
+                        print('\033[1;32m' + "{} dB fixed, row cnt = {}".
+                              format(initial_signal_intensity + sec_of_day // 600, row_cnt) + '\033[0m')
                         print(row)
                         # sys.exit(0)
                         return
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     # path = r"D:/Program Files/Serial Port Utility/LOG/1129/"
     path = r"E:\work\serial\1203\2_cold_start/"
     # file = "3_TAU1202_hot_start_154.txt"
-    file_lst = [f for f in os.listdir(path) if f.endswith('txt') or f.endswith("log")]  # and f.startswith("14")]
+    file_lst = [f for f in os.listdir(path)] # if f.endswith('txt') or f.endswith("log")]  # and f.startswith("14")]
     file_lst.sort()
     for file in file_lst:
         print("\n", file)
