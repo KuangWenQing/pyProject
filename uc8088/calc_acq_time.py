@@ -7,8 +7,8 @@ def calc_adjacent_ACQ_SPEC_time(_dir_file_: str)->list:
     ir_list = []
     with open(_dir_file_, 'r') as fd:
         for row in fd:
-            if "ACQ SPEC," in row:
-                ir = int(row.split("ir")[-1])
+            if "ACQ SPEC," in row and ",ir" in row:
+                ir = int(row.split(",ir")[-1])
                 ir_list.append(ir)
     if len(ir_list) < 2:
         return []

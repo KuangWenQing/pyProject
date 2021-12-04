@@ -16,11 +16,13 @@ def ACQ_SP_ir_span():
                 now_row = q[1]
                 pre_row = q[0]
                 try:
-                    now_ir_cnt = int(re.findall(r"\d+", now_row)[2])
-                    pre_ir_cnt = int(re.findall(r"\d+", pre_row)[2])
+                    now_ll = re.findall(r"\d+", now_row)
+                    pre_ll = re.findall(r"\d+", pre_row)
                 except:
                     continue
 
+                now_ir_cnt = int(now_ll[2])
+                pre_ir_cnt = int(pre_ll[2])
                 if now_ir_cnt - pre_ir_cnt > 200:
                     ab_row += 1
                     print(row)
@@ -32,8 +34,8 @@ def extract_tgt(fpath):
 
 
 if __name__ == "__main__":
-    fdir = "/home/ucchip/KWQ/gps_test/1130/"
-    file_list = [f for f in os.listdir(fdir) if f.endswith('.rep') and ("_-115" in f or "_-110" in f)]
+    fdir = "/home/ucchip/KWQ/gps_test/1204/"
+    file_list = [f for f in os.listdir(fdir) if f.endswith('.rep') and ("_-137" in f or "_-120" in f or "_-110" in f)]
     file_list.sort()
     for file in file_list:
         print(file)
