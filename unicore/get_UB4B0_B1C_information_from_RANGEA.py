@@ -47,6 +47,7 @@ dd_power = {
 }
 
 
+
 if __name__ == "__main__":
     path = "D:\\work\\0701\\"
     # file_lst = [f for f in os.listdir(path) if f.endswith('log')]
