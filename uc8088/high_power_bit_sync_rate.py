@@ -6,7 +6,7 @@ def find_the_abnormal_items_idx(arr: list):
     m = np.median(arr)
     diff_m = []
     for idx, item in enumerate(arr):
-        diff_m.append(item - m)
+        diff_m.append(np.fabs(item - m))
     return diff_m.index(max(diff_m))
 
 
@@ -30,8 +30,8 @@ def bit_synchro_error_rate(_dir_file: str):
         pop 掉 最异常的值， 再比较 最大值和最小值 的差 ...
         如此循环， 直到剩余的 PR 都是正常的。
         取 ACQ EFF 后面一条 PR。
-        分子 = 有效 PR个数
-        分母 = 异常 PR个数
+        分子 = 异常 PR个数
+        分母 = 有效 PR个数
     """
     error_PR, total_PR, xujing = 0, 0, 0
     with open(_dir_file, errors="ignore") as fd:
@@ -52,7 +52,7 @@ def bit_synchro_error_rate(_dir_file: str):
                 else:
                     valid_chl = list(range(10))
 
-                if ir_cnt % 3000 > 3:
+                if ir_cnt % 3000 > 2:
                     get_ACQ_EFF_flag = 1
                 else:
                     get_ACQ_EFF_flag = 0
@@ -70,6 +70,8 @@ def bit_synchro_error_rate(_dir_file: str):
 
                     while max(valid_pr) - min(valid_pr) > 100:
                         if max(valid_pr) - min(valid_pr) > 200:
+                            print("pr diff {}, row {}".format(max(valid_pr) - min(valid_pr), row_cnt))
+                            # print(valid_pr)
                             error_PR += 1
                         else:
                             xujing += 1
@@ -86,8 +88,8 @@ def bit_synchro_error_rate(_dir_file: str):
 
 
 if __name__ == "__main__":
-    fdir = "/home/ucchip/KWQ/gps_test/1204/"
-    file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and ("_-137" in f or "_-120" in f or "_-110" in f)]
+    fdir = "/home/ucchip/KWQ/gps_test/1205/"
+    file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and ("_-115" in f or "_-120" in f or "_-110" in f)]
     file_list.sort()
     for file in file_list:
         print(file)
