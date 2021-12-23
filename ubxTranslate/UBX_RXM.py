@@ -4,7 +4,7 @@ import sys
 GPS_ID = 0
 BDS_ID = 3
 
-path_file = r"/home/kwq/work/lab_test/1102/COM7_211102_101911_F9P.ubx"
+# path_file = r"/home/kwq/work/lab_test/1102/COM7_211102_101911_F9P.ubx"
 
 # f_out = open(r"D:\work\temp\1027\COM3_211027_034801_M8T.txt", 'w')
 
@@ -94,15 +94,15 @@ def get_epoch_RAWX_from_ubx(stream, GNSS_SYS = GPS_ID) -> dict:
 
 
 if __name__ == "__main__":
-    # for msg in get_raw_word_from_ubx(path + ubx_file):
-    #     print(msg)
+    path_file = r"/home/ucchip/tmp/1207/m8t_low_power.ubx"
+
     try:
         fd = open(path_file, 'rb')
     except:
         print("open ", path_file, " error")
         sys.exit(-1)
-    get_RAWX_from_ubx(fd)
-    for dd in get_RAWX_from_ubx(fd):
+
+    for dd in get_epoch_RAWX_from_ubx(fd):
         for key in dd.keys():
             print(dd[key])
         print()

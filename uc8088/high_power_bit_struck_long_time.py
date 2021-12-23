@@ -35,8 +35,8 @@ def extract_tgt(fpath):
 
 
 if __name__ == "__main__":
-    fdir = "/home/ucchip/KWQ/gps_test/1205/"
-    file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and ("_-115" in f or "_-120" in f or "_-110" in f)]
+    fdir = "/home/ucchip/KWQ/gps_test/1210/"
+    file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and ("_-115" in f or "_-125" in f or "_-110" in f)]
     file_list.sort()
     for file in file_list:
         print(file)

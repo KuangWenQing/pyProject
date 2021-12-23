@@ -91,8 +91,8 @@ def uc8088_process(path_file: str):
 
 if __name__ == "__main__":
     # path = r"D:\work\lab_test\gnss_acq_parameter_test\1111" + "\\"
-    path = r"/home/ucchip/KWQ/gps_test/1205/"
-    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log") ]  # and (f.startswith("19") or f.startswith("20"))]
+    path = r"/home/ucchip/KWQ/gps_test/1208/"
+    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log") and (f.startswith("32") or f.startswith("31") or f.startswith("30") or f.startswith("29"))]
     file_8088_lst.sort()
     # file_8088_lst = ["15_mdl_new_acqThre_nct20coh9_-147_gps_dopp10_10_0_0_para83_69_42_22_0_16_12_1_10_32_1163918_rxsc16_SLVL2.log", "16_mdl_new8_acqThre_nct20coh9_-147_gps_dopp10_10_0_0_para83_69_42_22_0_16_12_1_10_32_1163918_rxsc16_SLVL2.log"]
     # file_8088_lst = ["6_mdl_new8_acqThre_nct18coh9_-142_gps_dopp10_10_0_0_para83_69_42_25_0_22_12_1_10_32_1163918_rxsc40_SLVL2.log"]
