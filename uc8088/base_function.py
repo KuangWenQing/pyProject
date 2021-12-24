@@ -246,6 +246,7 @@ def chart_init(_path_):
 
 # 注意用 椭球高 故下面的 alt 都要改
 '''alt = 361.31     # 实验室窗户
+alt = 333.31     # 实验室窗户 ok
 lat = convert_ll_to_float("2936.1604")
 lon = convert_ll_to_float("10618.0286")'''
 '''alt = 285.3     # 楼下十字路口
@@ -257,13 +258,19 @@ lon = convert_ll_to_float("10618.06034")'''
 '''alt = 275.2     # 公园开阔地
 lat = convert_ll_to_float("2936.33509")
 lon = convert_ll_to_float("10618.09311")'''
+
 """alt = 100     # 模拟器
-lat = convert_ll_to_float("40000.00001")
-lon = convert_ll_to_float("11600.00001")
+lat = convert_ll_to_float("4000.00001")
+lon = convert_ll_to_float("11600.00001")"""
 """
 alt = 335.86     # 工位窗户 椭球高
 lat = convert_ll_to_float("2936.16018")
 lon = convert_ll_to_float("10618.02486")
+"""
+alt = 333.4     #
+lat = convert_ll_to_float("2936.147948")
+lon = convert_ll_to_float("10618.05316")
+
 
 Tlla = (lat, lon, alt)              # 度 （纬经高）
 Txyz = lla_to_xyz(lat, lon, alt)    # 米 （X Y Z）
