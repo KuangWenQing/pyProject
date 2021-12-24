@@ -193,7 +193,7 @@ def find_abnormal_data(arr=[]):
         return None
 
     tmp_sum = [0 for i in range(len_arr)]   # 存放差值和, 索引列表=[0, 1, 2, 3...(len_arr-1)]
-    for i in range(len(arr)):
+    for i in range(len_arr):
         for item in arr:
             tmp_sum[i] += np.fabs(arr[i] - item)
 

@@ -101,11 +101,11 @@ def simulate_process(path_file: str, begin_time=518400000):
 
 
 if __name__ == "__main__":
-    path = r"D:\work\temp\1113" + "\\"
-    sim_file = r"user_fix.rsim_(M3B1-BD2_B1C2)_RawNav(20211113-1106).dat.TXT"
-    hxxt_file = "hxxt_pwr_137.log"
+    path = r"E:\work\UPrecise_log\1118" + "\\"
+    sim_file = r"E:\work\simulate\user_fix.rsim_(M3B1-BD2_B1C2)_RawNav(20211113-1106).dat.TXT"
+    hxxt_file = "2_b1c_raw_power30dB.log"
 
-    sim = threading.Thread(target=simulate_process, args=(path + sim_file, 86418000))
+    sim = threading.Thread(target=simulate_process, args=(sim_file, 86418000))
     hxxt = threading.Thread(target=hxxt_process, args=(path + hxxt_file, ))
     sim.start()
     hxxt.start()
