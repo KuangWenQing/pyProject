@@ -4,13 +4,13 @@ import sys
 GPS_ID = 0
 BDS_ID = 3
 
-<<<<<<< HEAD
+
 path_file = r"/home/kwq/tmp/LG/cmp_m8t_save_pwr/1211-power_save.ubx"
 # path_file = r"/home/kwq/tmp/LG/cmp_m8t_save_pwr/1211-continue.ubx"
-=======
+
 # path_file = r"/home/kwq/work/lab_test/1102/COM7_211102_101911_F9P.ubx"
 
->>>>>>> refs/remotes/origin/kwq
+
 # f_out = open(r"D:\work\temp\1027\COM3_211027_034801_M8T.txt", 'w')
 
 
@@ -120,27 +120,29 @@ def get_epoch_MEASX_from_ubx(stream, GNSS_SYS = GPS_ID) -> dict:
 
 
 if __name__ == "__main__":
-    path_file = r"/home/ucchip/tmp/1207/m8t_low_power.ubx"
-
+    # path_file = r"/home/kwq/tmp/LG/cmp_m8t_save_pwr/1211-continue.ubx"
+    path_file = r"/home/kwq/tmp/LG/cmp_m8t_save_pwr/1211-power_save.ubx"
     try:
         fd = open(path_file, 'rb')
     except:
         print("open ", path_file, " error")
         sys.exit(-1)
-<<<<<<< HEAD
+
     NAV_ID = 0x01
     SVINFO_ID = 0x35
     parser = Parser([NAV_CLS])
     while True:
         msg = parser.receive_from(fd, NAV_ID, SVINFO_ID)
         if msg:
-            print(msg)
+            print(msg[:-1], " == ", msg[-1][:-1])
+            for item in msg[-1].RB:
+                print(item)
         elif msg is False:
             break
-=======
 
-    for dd in get_epoch_RAWX_from_ubx(fd):
-        for key in dd.keys():
-            print(dd[key])
-        print()
->>>>>>> refs/remotes/origin/kwq
+    #
+    # for dd in get_epoch_RAWX_from_ubx(fd):
+    #     for key in dd.keys():
+    #         print(dd[key])
+    #     print()
+    #

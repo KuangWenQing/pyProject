@@ -6,7 +6,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-logging.basicConfig(level=logging.DEBUG, format='%(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 # format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 
@@ -60,9 +60,9 @@ def pfa_ubx_test(path_file_, rawx=True):
     if rawx:
         ff = get_epoch_RAWX_from_ubx
 
-    time_sec, time_bak, total_satellite, false_satellite, true_satellite = 0, 0, 0, 0, 0
-    false_satellite_cnt_list = []
-    true_satellite_cnt_list = []
+    times_test = 1
+    time_sec, time_bak, total_false_satellite, total_true_satellite = 0, 0, 0, 0,
+    false_satellite_cnt_list, true_satellite_cnt_list = [], []
     false_satellite_cnt_dict = {}
     result = {"used time": [], "true satellite": [], "false satellite": [],
               "false_satellite mean": [], "false_satellite median": []}
@@ -73,35 +73,34 @@ def pfa_ubx_test(path_file_, rawx=True):
         time_sec += 1
         if dd:
             for key in dd.keys():
-                if key < 31:
-                    false_satellite += 1
+                if key > 10:
+                    total_false_satellite += 1
                     temp_false += 1
                     if key in false_satellite_cnt_dict.keys():
-                        if len(false_satellite_cnt_dict[key]) == len(result["used time"])+1:
+                        if len(false_satellite_cnt_dict[key]) == times_test:
                             false_satellite_cnt_dict[key][-1] += 1
-                        elif len(false_satellite_cnt_dict[key]) == len(result["used time"]):
+                        elif len(false_satellite_cnt_dict[key]) == times_test - 1:
                             false_satellite_cnt_dict[key].append(1)
                         else:
                             raise Exception
                     else:
                         false_satellite_cnt_dict[key] = []
-                        while len(false_satellite_cnt_dict[key]) != len(result["used time"]):
+                        while len(false_satellite_cnt_dict[key]) != times_test-1:
                             false_satellite_cnt_dict[key].append(0)
                         false_satellite_cnt_dict[key].append(1)
 
                     if key in false_satellite_keep_dict.keys():
-                        while len(false_satellite_keep_dict[key]) < time_sec:
+                        while len(false_satellite_keep_dict[key]) < time_sec-1:
                             false_satellite_keep_dict[key].append(0)
                         false_satellite_keep_dict[key].append(1)
                     else:
                         false_satellite_keep_dict[key] = []
-                        while len(false_satellite_keep_dict[key]) < time_sec:
+                        while len(false_satellite_keep_dict[key]) < time_sec-1:
                             false_satellite_keep_dict[key].append(0)
                         false_satellite_keep_dict[key].append(1)
                 else:
-                    true_satellite += 1
                     temp_true += 1
-                total_satellite += 1
+                    total_true_satellite += 1
             false_satellite_cnt_list.append(temp_false)
             true_satellite_cnt_list.append(temp_true)
         else:
@@ -120,12 +119,15 @@ def pfa_ubx_test(path_file_, rawx=True):
                 false_satellite_cnt_list.clear()
                 true_satellite_cnt_list.clear()
                 for key in false_satellite_cnt_dict.keys():
-                    if len(false_satellite_cnt_dict[key]) != len(result["used time"]):
+                    if len(false_satellite_cnt_dict[key]) != times_test:
                         false_satellite_cnt_dict[key].append(0)
-                for key in false_satellite_keep_dict.keys():
-                    while len(false_satellite_keep_dict[key]) < time_sec:
-                        false_satellite_keep_dict[key].append(0)
+                times_test += 1
+            for key in false_satellite_keep_dict.keys():
+                while len(false_satellite_keep_dict[key]) < time_sec:
+                    false_satellite_keep_dict[key].append(0)
+
             time_bak = time_sec
+
     if false_satellite_cnt_list and true_satellite_cnt_list:
         logging.debug("\033[1;36m" +
                       "used time = {},true satellite cnt = {}, false satellite cnt = {}, mean = {}, median = {}"
@@ -137,7 +139,7 @@ def pfa_ubx_test(path_file_, rawx=True):
         result["false satellite"].append(np.sum(false_satellite_cnt_list))
         result["false_satellite mean"].append(np.mean(false_satellite_cnt_list))
         result["false_satellite median"].append(np.median(false_satellite_cnt_list))
-        time_bak = time_sec
+
         false_satellite_cnt_list.clear()
         true_satellite_cnt_list.clear()
         for key in false_satellite_cnt_dict.keys():
@@ -171,13 +173,17 @@ def pfa_ubx_test(path_file_, rawx=True):
         out_str += "{:^5.1f}".format(np.median(false_satellite_keep_time_dict[key]))
     print(out_str)
     result.update(false_satellite_cnt_dict)
+    for key in result.keys():
+        sum_item = np.sum(result[key])
+        mean_item = np.mean(result[key])
+        result[key] += [sum_item, mean_item]
     df = pd.DataFrame(result)
     if rawx:
-        df.to_excel(path + "PFA_base_rawx.xls", index=False)
+        df.to_excel(path_file_ + "_PFA_base_rawx.xls", index=False)
     else:
-        df.to_excel(path + "PFA_base_measx.xls", index=False)
+        df.to_excel(path_file_ + "_PFA_base_measx.xls", index=False)
     print("time = {}, true_satellite = {}, false_satellite = {}, total_satellite = {}"
-          .format(time_sec, true_satellite, false_satellite, total_satellite))
+          .format(time_sec, total_true_satellite, total_false_satellite, total_true_satellite + total_false_satellite))
 
 
 def pad_ubx_by_gsv(path_file_):
@@ -186,120 +192,107 @@ def pad_ubx_by_gsv(path_file_):
     except:
         print("open ", path_file_, " error")
         sys.exit(-1)
-    reset_flag = 1
+
     sv_idx = (4, 8, 12, 16)
     cnr_idx = (7, 11, 15, 19)
 
-    time_sec, time_bak, total_satellite, false_satellite, true_satellite = 0, 0, 0, 0, 0
+    times_test, reset_flag = 1, 1
+    time_sec, time_bak, false_satellite, true_satellite, false_satellite_per_sec = 0, 0, 0, 0, 0
+    total_false_satellite, total_true_satellite = 0, 0
     false_satellite_cnt_list = []
-    true_satellite_cnt_list = []
-    false_satellite_cnt_dict = {}
-    false_satellite_keep_dict = {}
+    false_satellite_cnt_dict, false_satellite_keep_dict = {}, {}
+
     result = {"used time": [], "true satellite": [], "false satellite": [],
               "false_satellite mean": [], "false_satellite median": []}
-    temp_false, temp_true = 0, 0
+
     for row in fd_:
-        if "$GNGGA" in row:
-            row = row[row.index('$GN'):]
-            if "GGA,," in row:
-                if reset_flag == 1:
-                    continue
-                reset_flag = 1
-                if false_satellite_cnt_list and true_satellite_cnt_list:
-                    logging.debug("\033[1;36m" +
-                                  "used time = {},true satellite cnt = {}, false satellite cnt = {}, mean = {}, median = {}"
-                                  .format(time_sec - time_bak, np.sum(true_satellite_cnt_list),
-                                          np.sum(false_satellite_cnt_list), np.mean(false_satellite_cnt_list),
-                                          np.median(false_satellite_cnt_list)) + "\033[0m")
+        if "$GPGSV" in row:
+            row_ = row[row.index('$GP'):]
+            row_ = row_[:row_.index("*")]
+            ret = row_.split(',')
+
+            total_sentence = int(ret[1])
+            current_sentence = int(ret[2])
+            total_sv = int(ret[3])
+
+            if current_sentence == 1:           # next second
+                for key in false_satellite_keep_dict.keys():
+                    while len(false_satellite_keep_dict[key]) < time_sec:
+                        false_satellite_keep_dict[key].append(0)
+
+                false_satellite_cnt_list.append(false_satellite_per_sec)
+                false_satellite_per_sec = 0
+                time_sec += 1
+
+            if total_sv == 0:                   # cold reset
+                for key in false_satellite_cnt_dict.keys():
+                    if len(false_satellite_cnt_dict[key]) < times_test:
+                        false_satellite_cnt_dict[key].append(0)
+                if reset_flag == 0:
+                    reset_flag = 1
                     result["used time"].append(time_sec - time_bak)
-                    result["true satellite"].append(np.sum(true_satellite_cnt_list))
-                    result["false satellite"].append(np.sum(false_satellite_cnt_list))
+                    result["true satellite"].append(true_satellite)
+                    result["false satellite"].append(false_satellite)
                     result["false_satellite mean"].append(np.mean(false_satellite_cnt_list))
                     result["false_satellite median"].append(np.median(false_satellite_cnt_list))
                     false_satellite_cnt_list.clear()
-                    true_satellite_cnt_list.clear()
-                    for key in false_satellite_cnt_dict.keys():
-                        if len(false_satellite_cnt_dict[key]) != len(result["used time"]):
-                            false_satellite_cnt_dict[key].append(0)
-                time_bak = time_sec
-            else:
-                reset_flag = 0
-                if temp_true:
-                    false_satellite_cnt_list.append(temp_false)
-                    true_satellite_cnt_list.append(temp_true)
-            time_sec += 1
-            temp_false, temp_true = 0, 0
-        elif "$GPGSV" in row:
-            if reset_flag:
-                continue
-            else:
-                row = row[row.index('$GP'):]
-                ret = row.split(',')
-                total_sentence = int(ret[1])
-                current_sentence = int(ret[2])
-                total_sv = int(ret[3])
-                if total_sentence == current_sentence:    # last GSV
-                    if row.count(',') != 19 - 4*((total_sentence * 4) - total_sv):
-                        continue
-                else:
-                    if row.count(',') != 19:
-                        continue
-                ret = row[:row.index('*')].split(',')
-                for i in range(len(sv_idx)):
-                    if total_sentence == current_sentence:
-                        if i >= 4 - ((total_sentence * 4) - total_sv):      # attention i = 0, 1, 2, 3
-                            break
-                    if ret[sv_idx[i]] and ret[cnr_idx[i]]:
-                        prn = int(ret[sv_idx[i]])
-                        if prn < 31:
-                            false_satellite += 1
-                            temp_false += 1
-                            if prn in false_satellite_cnt_dict.keys():
-                                if len(false_satellite_cnt_dict[prn]) == len(result["used time"]) + 1:
-                                    false_satellite_cnt_dict[prn][-1] += 1
-                                elif len(false_satellite_cnt_dict[prn]) == len(result["used time"]):
-                                    false_satellite_cnt_dict[prn].append(1)
-                                else:
-                                    raise Exception
-                            else:
-                                false_satellite_cnt_dict[prn] = []
-                                while len(false_satellite_cnt_dict[prn]) != len(result["used time"]):
-                                    false_satellite_cnt_dict[prn].append(0)
-                                false_satellite_cnt_dict[prn].append(1)
+                    times_test += 1
 
-                            if prn in false_satellite_keep_dict.keys():
-                                while len(false_satellite_keep_dict[prn]) < time_sec - 1:
-                                    false_satellite_keep_dict[prn].append(0)
-                                false_satellite_keep_dict[prn].append(1)
+                time_bak = time_sec
+                true_satellite, false_satellite = 0, 0
+                continue
+
+            if total_sentence == current_sentence:    # last GSV
+                if row.count(',') != 19 - 4*((total_sentence * 4) - total_sv):
+                    continue
+            else:
+                if row.count(',') != 19:
+                    continue
+            reset_flag = 0
+
+            for i in range(len(sv_idx)):
+                if total_sentence == current_sentence:
+                    if i >= 4 - ((total_sentence * 4) - total_sv):      # attention i = 0, 1, 2, 3
+                        break
+                if ret[sv_idx[i]] and ret[cnr_idx[i]]:
+                    prn = int(ret[sv_idx[i]])
+                    if prn > 10:
+                        total_false_satellite += 1
+                        false_satellite += 1
+                        false_satellite_per_sec += 1
+                        if prn in false_satellite_cnt_dict.keys():
+                            if len(false_satellite_cnt_dict[prn]) == times_test:
+                                false_satellite_cnt_dict[prn][-1] += 1
+                            elif len(false_satellite_cnt_dict[prn]) == times_test - 1:
+                                false_satellite_cnt_dict[prn].append(1)
                             else:
-                                false_satellite_keep_dict[prn] = []
-                                while len(false_satellite_keep_dict[prn]) < time_sec-1:
-                                    false_satellite_keep_dict[prn].append(0)
-                                false_satellite_keep_dict[prn].append(1)
+                                raise Exception
                         else:
-                            true_satellite += 1
-                            temp_true += 1
-                        total_satellite += 1
-    if false_satellite_cnt_list and true_satellite_cnt_list:
-        logging.debug("\033[1;36m" +
-                      "used time = {},true satellite cnt = {}, false satellite cnt = {}, mean = {}, median = {}"
-                      .format(time_sec - time_bak, np.sum(true_satellite_cnt_list),
-                              np.sum(false_satellite_cnt_list), np.mean(false_satellite_cnt_list),
-                              np.median(false_satellite_cnt_list)) + "\033[0m")
-        result["used time"].append(time_sec - time_bak)
-        result["true satellite"].append(np.sum(true_satellite_cnt_list))
-        result["false satellite"].append(np.sum(false_satellite_cnt_list))
-        result["false_satellite mean"].append(np.mean(false_satellite_cnt_list))
-        result["false_satellite median"].append(np.median(false_satellite_cnt_list))
-        time_bak = time_sec
-        false_satellite_cnt_list.clear()
-        true_satellite_cnt_list.clear()
-        for key in false_satellite_cnt_dict.keys():
-            if len(false_satellite_cnt_dict[key]) != len(result["used time"]):
-                false_satellite_cnt_dict[key].append(0)
-        for key in false_satellite_keep_dict.keys():
-            while len(false_satellite_keep_dict[key]) < time_sec-1:
-                false_satellite_keep_dict[key].append(0)
+                            false_satellite_cnt_dict[prn] = []
+                            while len(false_satellite_cnt_dict[prn]) != times_test - 1:
+                                false_satellite_cnt_dict[prn].append(0)
+                            false_satellite_cnt_dict[prn].append(1)
+
+                        if prn in false_satellite_keep_dict.keys():
+                            while len(false_satellite_keep_dict[prn]) < time_sec - 1:
+                                false_satellite_keep_dict[prn].append(0)
+                            false_satellite_keep_dict[prn].append(1)
+                        else:
+                            false_satellite_keep_dict[prn] = []
+                            while len(false_satellite_keep_dict[prn]) < time_sec-1:
+                                false_satellite_keep_dict[prn].append(0)
+                            false_satellite_keep_dict[prn].append(1)
+                    else:
+                        total_true_satellite += 1
+                        true_satellite += 1
+    for key in false_satellite_cnt_dict.keys():
+        if len(false_satellite_cnt_dict[key]) < times_test:
+            false_satellite_cnt_dict[key].append(0)
+    result["used time"].append(time_sec - time_bak)
+    result["true satellite"].append(true_satellite)
+    result["false satellite"].append(false_satellite)
+    result["false_satellite mean"].append(np.mean(false_satellite_cnt_list))
+    result["false_satellite median"].append(np.median(false_satellite_cnt_list))
     false_satellite_keep_time_dict = dict_to_keep_time(false_satellite_keep_dict)
     out_str = "           sv   "
     sorted_key = sorted(false_satellite_keep_time_dict)
@@ -313,18 +306,21 @@ def pad_ubx_by_gsv(path_file_):
         out_str += "{:^5.1f}".format(np.median(false_satellite_keep_time_dict[key]))
     print(out_str)
     result.update(false_satellite_cnt_dict)
+    for key in result.keys():
+        sum_item = np.sum(result[key])
+        mean_item = np.mean(result[key])
+        result[key] += [sum_item, mean_item]
     df = pd.DataFrame(result)
-
-    df.to_excel(path + "PFA_base_gsv.xls", index=False)
+    df.to_excel(path_file_ + "_PFA_base_gsv.xls", index=False)
 
     print("time = {}, true_satellite = {}, false_satellite = {}, total_satellite = {}"
-          .format(time_sec, true_satellite, false_satellite, total_satellite))
+          .format(time_sec, total_true_satellite, total_false_satellite, total_true_satellite + total_false_satellite))
 
 
 if __name__ == '__main__':
-    path = r'/home/kwq/work/lab_test/1218/'
-    # file = "ReceivedTofile-COM3-2021-12-13_15-52-22.DAT"
-    file = "ReceivedTofile-COM3-2021-12-18_12-05-09_pwr115_sv31_32.DAT"
+    path = r'/home/kwq/work/lab_test/1213/'
+    file = "ReceivedTofile-COM3-2021-12-13_15-52-22.DAT"
+    # file = "ReceivedTofile-COM3-2021-12-18_12-05-09_pwr115_sv31_32.DAT"
     # file = "ReceivedTofile-COM3-2021-12-14_18-31-53_pwr115.DAT"
     # file = "ReceivedTofile-COM3-2021-12-16_16-13-02_pwr115.DAT"
     pad_ubx_by_gsv(path + file)
