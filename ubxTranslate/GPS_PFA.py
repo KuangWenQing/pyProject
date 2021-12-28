@@ -73,7 +73,8 @@ def pfa_ubx_test(path_file_, rawx=True):
         time_sec += 1
         if dd:
             for key in dd.keys():
-                if key > 10:
+                # if key > 30 or (5 < key < 26):
+                if key > 10:  # or key < 11:
                     total_false_satellite += 1
                     temp_false += 1
                     if key in false_satellite_cnt_dict.keys():
@@ -161,22 +162,23 @@ def pfa_ubx_test(path_file_, rawx=True):
     # sorted_false_satellite_keep_time_dict = dict(sorted(sorted(false_satellite_keep_time_dict.items(), key=lambda kv:(kv[0], kv[1]))))
     # for key in false_satellite_keep_time_dict.keys():
     #     print("sv {} keep time mean = {:.1f} s  , median = {}".format(key, np.mean(false_satellite_keep_time_dict[key]), np.median(false_satellite_keep_time_dict[key])))
-    out_str = "           sv   "
+    out_str = "    -----    sv   "
     sorted_key = sorted(false_satellite_keep_time_dict)
     for key in sorted_key:
         out_str += "{:^5}".format(key)
-    out_str += "\n{:^17s}".format("keep time mean")
+    out_str += "\n{:<17s}".format("keep time mean")
     for key in sorted_key:
         out_str += "{:^5.1f}".format(np.mean(false_satellite_keep_time_dict[key]))
     out_str += "\n{:<17s}".format("keep time median")
     for key in sorted_key:
         out_str += "{:^5.1f}".format(np.median(false_satellite_keep_time_dict[key]))
     print(out_str)
-    result.update(false_satellite_cnt_dict)
+    sorted_false_satellite_cnt_dict = dict(sorted(false_satellite_cnt_dict.items(), key=lambda kv: (kv[0], kv[1])))
+    result.update(sorted_false_satellite_cnt_dict)
     for key in result.keys():
         sum_item = np.sum(result[key])
         mean_item = np.mean(result[key])
-        result[key] += [sum_item, mean_item]
+        result[key] += [sum_item, round(mean_item, 2)]
     df = pd.DataFrame(result)
     if rawx:
         df.to_excel(path_file_ + "_PFA_base_rawx.xls", index=False)
@@ -256,7 +258,8 @@ def pad_ubx_by_gsv(path_file_):
                         break
                 if ret[sv_idx[i]] and ret[cnr_idx[i]]:
                     prn = int(ret[sv_idx[i]])
-                    if prn > 10:
+                    # if prn > 30 or (5 < prn < 26):
+                    if prn > 10:  # or prn < 11:
                         total_false_satellite += 1
                         false_satellite += 1
                         false_satellite_per_sec += 1
@@ -294,22 +297,24 @@ def pad_ubx_by_gsv(path_file_):
     result["false_satellite mean"].append(np.mean(false_satellite_cnt_list))
     result["false_satellite median"].append(np.median(false_satellite_cnt_list))
     false_satellite_keep_time_dict = dict_to_keep_time(false_satellite_keep_dict)
-    out_str = "           sv   "
+    out_str = "    -----    sv   "
     sorted_key = sorted(false_satellite_keep_time_dict)
     for key in sorted_key:
         out_str += "{:^5}".format(key)
-    out_str += "\n{:^17s}".format("keep time mean")
+    out_str += "\n{:<17s}".format("keep time mean")
     for key in sorted_key:
         out_str += "{:^5.1f}".format(np.mean(false_satellite_keep_time_dict[key]))
     out_str += "\n{:<17s}".format("keep time median")
     for key in sorted_key:
         out_str += "{:^5.1f}".format(np.median(false_satellite_keep_time_dict[key]))
     print(out_str)
-    result.update(false_satellite_cnt_dict)
+
+    sorted_false_satellite_cnt_dict = dict(sorted(false_satellite_cnt_dict.items(), key=lambda kv: (kv[0], kv[1])))
+    result.update(sorted_false_satellite_cnt_dict)
     for key in result.keys():
         sum_item = np.sum(result[key])
         mean_item = np.mean(result[key])
-        result[key] += [sum_item, mean_item]
+        result[key] += [sum_item, round(mean_item, 2)]
     df = pd.DataFrame(result)
     df.to_excel(path_file_ + "_PFA_base_gsv.xls", index=False)
 
@@ -318,9 +323,13 @@ def pad_ubx_by_gsv(path_file_):
 
 
 if __name__ == '__main__':
-    path = r'/home/kwq/work/lab_test/1213/'
-    file = "ReceivedTofile-COM3-2021-12-13_15-52-22.DAT"
+    path = r'/home/kwq/work/lab_test/1216/'
+    # file = "ReceivedTofile-COM3-2021-12-13_15-52-22.DAT"
+    file = "ReceivedTofile-COM3-2021-12-16_16-13-02_pwr115.DAT"
     # file = "ReceivedTofile-COM3-2021-12-18_12-05-09_pwr115_sv31_32.DAT"
+    # file = "ReceivedTofile-COM3-2021-12-18_16-13-26_pwr115_sv1-5_26-30.DAT"
+    # file = "ReceivedTofile-COM3-2021-12-25_15-54-01_pwr115_sv11-15.DAT"
+    # file = "ReceivedTofile-COM3-2021-12-27_17-42-10_pwr115_sv1-5.DAT"
     # file = "ReceivedTofile-COM3-2021-12-14_18-31-53_pwr115.DAT"
     # file = "ReceivedTofile-COM3-2021-12-16_16-13-02_pwr115.DAT"
     pad_ubx_by_gsv(path + file)
