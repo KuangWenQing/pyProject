@@ -91,13 +91,14 @@ def uc8088_process(path_file: str):
 
 if __name__ == "__main__":
     # path = r"D:\work\lab_test\gnss_acq_parameter_test\1111" + "\\"
-    path = r"/home/ucchip/KWQ/gps_test/1208/"
-    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log") and (f.startswith("32") or f.startswith("31") or f.startswith("30") or f.startswith("29"))]
+    path = r"/home/ucchip/KWQ/gps_test/1221/"
+    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log") and "cut" in f] # (f.startswith("32") or f.startswith("31") or f.startswith("30") or f.startswith("29"))]
     file_8088_lst.sort()
     # file_8088_lst = ["15_mdl_new_acqThre_nct20coh9_-147_gps_dopp10_10_0_0_para83_69_42_22_0_16_12_1_10_32_1163918_rxsc16_SLVL2.log", "16_mdl_new8_acqThre_nct20coh9_-147_gps_dopp10_10_0_0_para83_69_42_22_0_16_12_1_10_32_1163918_rxsc16_SLVL2.log"]
     # file_8088_lst = ["6_mdl_new8_acqThre_nct18coh9_-142_gps_dopp10_10_0_0_para83_69_42_25_0_22_12_1_10_32_1163918_rxsc40_SLVL2.log"]
     # file_8088_lst = ["6_mdl_new8_acqThre_nct18coh9_-142_gps_dopp10_10_0_0_para83_69_42_25_0_22_12_1_10_32_1163918_rxsc40_SLVL2.log",]
-    dir_sim_file = r"/home/ucchip/KWQ/gps_test/fix_pr_1e7.RSIM_(M1B1-GPS_L1)_RawNav(20211116-1959).dat.TXT"
+    # dir_sim_file = r"/home/ucchip/KWQ/gps_test/fix_pr_1e7.RSIM_(M1B1-GPS_L1)_RawNav(20211116-1959).dat.TXT"  # small
+    dir_sim_file = r"/home/ucchip/KWQ/gps_test/fixpr_0gap.RSIM_(M4B1-GPS_L1)_RawNav(20211209-1955).dat.TXT"    # big
     for file in file_8088_lst:
         g_dd, g_sow = {}, 0
         err_bits, data_bits, err_word, err_word_Misjudgment, stop_run = 0, 0, 0, 0, 0
