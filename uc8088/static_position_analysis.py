@@ -14,7 +14,9 @@ T_speed = 0         # 速度 m/s
 chart = 1
 
 path = r"D:\temp\1115" + "\\"
+path = r"/home/kwq/work/east_window/1211/"
 file_list = [f for f in os.listdir(path) if f.endswith('.log')]
+# file_list = ['1_lg_211211101225_.txt']
 
 if __name__ == "__main__":
     head_xlsx = [[' ', 'ave', '50%', '95%', 'std', 'cnt']]

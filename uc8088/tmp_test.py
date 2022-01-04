@@ -120,8 +120,8 @@ def get_epoch_MEASX_from_ubx(stream, GNSS_SYS = GPS_ID) -> dict:
 
 
 if __name__ == "__main__":
-    # path_file = r"/home/kwq/tmp/LG/cmp_m8t_save_pwr/1211-continue.ubx"
     path_file = r"/home/kwq/tmp/LG/cmp_m8t_save_pwr/1211-power_save.ubx"
+
     try:
         fd = open(path_file, 'rb')
     except:
@@ -134,9 +134,7 @@ if __name__ == "__main__":
     while True:
         msg = parser.receive_from(fd, NAV_ID, SVINFO_ID)
         if msg:
-            print(msg[:-1], " == ", msg[-1][:-1])
-            for item in msg[-1].RB:
-                print(item)
+            print(msg)
         elif msg is False:
             break
 

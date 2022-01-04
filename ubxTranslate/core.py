@@ -248,7 +248,8 @@ class Message:
         payload_len = len(payload)
 
         try:
-            self._repeated_block.repeat = 0
+            # self._repeated_block.repeat = 0
+            self._repeated_block.repeat = -1
         except AttributeError:
             pass
 

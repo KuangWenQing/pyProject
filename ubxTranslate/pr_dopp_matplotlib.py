@@ -11,7 +11,7 @@ def analysis_show(dir_path: str, target='pr'):
     try:
         fd = open(dir_path, 'rb')
     except:
-        print("open ", path_file, " error")
+        print("open ", dir_path, " error")
         sys.exit(-1)
 
     sv_dict = {}
