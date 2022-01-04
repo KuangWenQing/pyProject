@@ -74,7 +74,7 @@ def pfa_ubx_test(path_file_, rawx=True):
         if dd:
             for key in dd.keys():
                 # if key > 30 or (5 < key < 26):
-                if key > 10:  # or key < 11:
+                if key > 5:  # or key < 11:
                     total_false_satellite += 1
                     temp_false += 1
                     if key in false_satellite_cnt_dict.keys():
@@ -166,6 +166,9 @@ def pfa_ubx_test(path_file_, rawx=True):
     sorted_key = sorted(false_satellite_keep_time_dict)
     for key in sorted_key:
         out_str += "{:^5}".format(key)
+    out_str += "\n{:<17s}".format("keep time max")
+    for key in sorted_key:
+        out_str += "{:^5d}".format(np.max(false_satellite_keep_time_dict[key]))
     out_str += "\n{:<17s}".format("keep time mean")
     for key in sorted_key:
         out_str += "{:^5.1f}".format(np.mean(false_satellite_keep_time_dict[key]))
@@ -259,7 +262,7 @@ def pad_ubx_by_gsv(path_file_):
                 if ret[sv_idx[i]] and ret[cnr_idx[i]]:
                     prn = int(ret[sv_idx[i]])
                     # if prn > 30 or (5 < prn < 26):
-                    if prn > 10:  # or prn < 11:
+                    if prn > 5: #15 or prn < 11:
                         total_false_satellite += 1
                         false_satellite += 1
                         false_satellite_per_sec += 1
@@ -301,6 +304,9 @@ def pad_ubx_by_gsv(path_file_):
     sorted_key = sorted(false_satellite_keep_time_dict)
     for key in sorted_key:
         out_str += "{:^5}".format(key)
+    out_str += "\n{:<17s}".format("keep time max")
+    for key in sorted_key:
+        out_str += "{:^5d}".format(np.max(false_satellite_keep_time_dict[key]))
     out_str += "\n{:<17s}".format("keep time mean")
     for key in sorted_key:
         out_str += "{:^5.1f}".format(np.mean(false_satellite_keep_time_dict[key]))
@@ -323,13 +329,13 @@ def pad_ubx_by_gsv(path_file_):
 
 
 if __name__ == '__main__':
-    path = r'/home/kwq/work/lab_test/1216/'
+    path = r'/home/kwq/work/lab_test/1227/'
     # file = "ReceivedTofile-COM3-2021-12-13_15-52-22.DAT"
-    file = "ReceivedTofile-COM3-2021-12-16_16-13-02_pwr115.DAT"
+    # file = "ReceivedTofile-COM3-2021-12-16_16-13-02_pwr115.DAT"
     # file = "ReceivedTofile-COM3-2021-12-18_12-05-09_pwr115_sv31_32.DAT"
     # file = "ReceivedTofile-COM3-2021-12-18_16-13-26_pwr115_sv1-5_26-30.DAT"
     # file = "ReceivedTofile-COM3-2021-12-25_15-54-01_pwr115_sv11-15.DAT"
-    # file = "ReceivedTofile-COM3-2021-12-27_17-42-10_pwr115_sv1-5.DAT"
+    file = "ReceivedTofile-COM3-2021-12-27_17-42-10_pwr115_sv1-5.DAT"
     # file = "ReceivedTofile-COM3-2021-12-14_18-31-53_pwr115.DAT"
     # file = "ReceivedTofile-COM3-2021-12-16_16-13-02_pwr115.DAT"
     pad_ubx_by_gsv(path + file)
