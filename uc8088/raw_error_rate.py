@@ -88,7 +88,6 @@ def uc8088_process(path_file: str):
     stop_run = 1
 
 
-
 if __name__ == "__main__":
     # path = r"D:\work\lab_test\gnss_acq_parameter_test\1111" + "\\"
     path = r"/home/ucchip/KWQ/gps_test/1208/"
