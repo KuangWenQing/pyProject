@@ -1,5 +1,5 @@
 from simulator.SIM_Raw import get_epoch_raw_from_simulator
-from UBX_RXM import get_raw_word_from_ubx
+from ubxTranslate.UBX_RXM import get_raw_word_from_ubx
 from threading import Thread, Event, Condition, Semaphore
 import time
 import sys, os
@@ -13,7 +13,7 @@ g_dd = {}
 sv_id = -1
 words = []
 
-stop_run = False
+stop_run = 0
 
 total_bits = 0
 error_bits = 0
@@ -29,8 +29,12 @@ event 对象最好单次使用，就是说，你创建一个 event 对象，让�
 condition = Condition()
 semaphore = Semaphore(0)
 
-con = multiprocessing.Condition()
-sem = multiprocessing.Semaphore(0)
+
+err_bits = multiprocessing.Value('i', 0)
+tot_bits = multiprocessing.Value('i', 0)
+manager = multiprocessing.Manager()
+q = manager.Queue(maxsize=1)
+lock = manager.Lock()   # 初始化一把锁
 
 
 def simulate_thread(path_file: str):
@@ -96,80 +100,84 @@ def ubx_thread(path_file: str):
             return
 
 
-def simulate_process(path_file: str):
-    global g_dd, g_sow, stop_run
+def simulate_process(path_file: str, lock, q):
     if not os.path.exists(path_file):
         sys.exit(-1)
     fd = open(path_file, 'r')
-    # sem.acquire()
+
     print('simulate_process start')
+
     for dd in get_epoch_raw_from_simulator(fd):
-        con.acquire()
+        q.put(dd)
+
+        lock.acquire()
         key_list = list(dd.keys())
-        g_sow = dd[key_list[0]][1] >> 13
-        g_dd = dd
-        logging.debug("g_sow = {}".format(g_sow))
-        con.notify()
-        if stop_run:
-            break
-        con.wait()
-        con.release()
+        second_of_week = dd[key_list[0]][1] >> 13
+        lock.release()
+        logging.debug("g_sow = {}".format(second_of_week))
+
     print('simulate_process end')
 
 
-def ubx_process(path_file: str):
-    global sv_id, words, stop_run, total_bits, error_bits
+def ubx_process(path_file: str, q, err_bits, tot_bits):
+    sim_sow, sow = 0, 0
     print('ubx_process start')
-    # sem.release()
+
     for prn_words in get_raw_word_from_ubx(path_file):
         sv_id, words = prn_words
         if words:
             sow = (words[1] & 0x3fffffff) >> 13
-            con.acquire()
-            while sow > g_sow:
-                logging.debug("sow = {}".format(sow))
+            logging.debug("sow = {}".format(sow))
 
-                con.notify()
-                con.wait()
-            con.release()
+            if q.full() and sim_sow < sow:
+                sim_dd = q.put()
 
-            if sow < g_sow:
+            sim_sow = sim_dd[str(sv_id)][1] >> 13
+
+            if sow > sim_sow:
+                q.put()
+                continue
+            if sow < :
                 continue
             else:
-                sim_sv_raw = g_dd[str(sv_id)]
+                ddd_ = q.put()
+                sim_sv_raw = ddd_[str(sv_id)]
                 for i in range(10):
                     if (sim_sv_raw[i] >> 6) != (words[i] & 0x3fffffff) >> 6:    # ubx 高2位 补了 1， 凑齐了 32 个 bit
                         sim_raw_bin_str = bin(sim_sv_raw[i] | 0xc0000000)[4:]   # 高2位补1, 保证高位为0时不被清理掉，去掉0b11
                         ubx_raw_bin_str = bin(words[i])[4:]     # 去掉 0b11
                         for idx in range(24):                   # 每个字只比较 高 24 位 ， 最后 6 位 是奇偶校验
                             if sim_raw_bin_str[idx] != ubx_raw_bin_str[idx]:
-                                error_bits += 1
+                                err_bits.value += 1
                             else:
-                                total_bits += 1
+                                tot_bits.value += 1
                     else:
-                        total_bits += 24                        # 24个位都正确
+                        tot_bits.value += 24                        # 24个位都正确
         else:
-            con.acquire()
             stop_run = True
             print('ubx_process end')
-            con.notify()
-            con.release()
             return
 
 
 if __name__ == '__main__':
-    path = r"D:\work\temp\1028" + "\\"
+    path = r"/home/ucchip/tmp/1208" + "/"
     ubx_file = "COM3_211028_042604_M8T.ubx"
     simulator_file = r"中央公园广场.RSIM_(M1B1-GPS_L1)_RawNav(20211028-1225).dat.TXT"
     time_start = time.time()
+
     # sim = Thread(target=simulate_thread, args=(path + simulator_file, ))
     # ubx = Thread(target=ubx_thread, args=(path + ubx_file, ))
-    sim = multiprocessing.Process(target=simulate_process, args=(path + simulator_file, ))
-    ubx = multiprocessing.Process(target=ubx_process, args=(path + ubx_file,))
+
+
+    sim = multiprocessing.Process(target=simulate_process, args=(path + simulator_file, q, lock))
+    ubx = multiprocessing.Process(target=ubx_process, args=(path + ubx_file, q, err_bits, tot_bits))
+
     sim.start()
     ubx.start()
     sim.join()
     ubx.join()
 
+    total_bits = tot_bits.value
+    error_bits = err_bits.value
     print("error_bits = {:d}, total_bits = {:d}, symbol error rate = {:.2%}".format(error_bits, total_bits, error_bits / total_bits))
     print("used time = {:.3f}s".format(time.time() - time_start))

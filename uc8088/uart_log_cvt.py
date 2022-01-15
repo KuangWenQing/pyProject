@@ -116,8 +116,9 @@ def cvt_uart_log(file):
 
 if __name__ == "__main__":
     # fdir = "/home/htang/gps_test_rec/1021/log0/"
-    fdir = "/home/ucchip/KWQ/gps_test/1222/"
-    file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and ("-13" in f)]
+    # fdir = "/home/ucchip/work/2022/0114/"
+    fdir = "/home/ucchip/KWQ/gps_test/2022/0114/"
+    file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and 'SLVL3' in f]
     for file in file_list:
         if os.path.exists(fdir + file[:-3] + "rep"):
             continue

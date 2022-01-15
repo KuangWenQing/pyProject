@@ -27,15 +27,19 @@ from time import sleep
 
 
 def task1():
-    while True:
+    i = 5
+    while i:
         sleep(1)
         print('这是任务1.。。。。。。。。。。',os.getpid(),'------',os.getppid())
+        i -= 1
 
 
 def task2():
-    while True:
+    i = 2
+    while i:
         sleep(2)
         print('这是任务2.。。。。。。。。。。',os.getpid(),'------',os.getppid())
+        i -= 1
 
 
 if __name__ == '__main__':
@@ -43,7 +47,10 @@ if __name__ == '__main__':
     # 子进程
     p = Process(target=task1, name='任务1')
     p.start()
-    print(p.name)
+
     p1 = Process(target=task2, name='任务2')
     p1.start()
+    p.join()
+    p1.join()
+    print(p.name)
     print(p1.name)
