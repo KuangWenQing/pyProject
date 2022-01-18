@@ -8,12 +8,18 @@ def calc_adjacent_ACQ_SPEC_time(_dir_file_: str)->list:
     with open(_dir_file_, 'r') as fd:
         for row in fd:
             if "ACQ SPEC," in row and ",ir" in row:
-                ir = int(row.split(",ir")[-1])
+                try:
+                    ir = int(row.split(",ir")[-1])
+                except:
+                    ir = 0
                 ir_list.append(ir)
+
     if len(ir_list) < 2:
         return []
     _sub_ir_ = []
     for i in range(1, len(ir_list)):
+        if ir_list[i] == 0:
+            ir_list[i] = (ir_list[i-1] + ir_list[i+1])/2
         temp = ir_list[i] - ir_list[i - 1]
         _sub_ir_.append(temp)
     return _sub_ir_
