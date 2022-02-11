@@ -9,10 +9,15 @@ import matplotlib.pyplot as plt
 
 #path = "/home/jqiu/gps_test_log/0114/"
 #path = "/home/jqiu/share/th_tmp/"
+
 path = "/home/kwq/work/lab_test/2022/0107/"
 # name = "1_220104161724_fixpr_gps_0104lpPara_1230fw_.log"
 # name = "4_220104170158_fixpr_gps_nowLpPara_1022fw_.log"
 name = "210817174202_mdltcxo_fixpr_gps_TCXO.log"
+
+# path = "/home/ucchip/th/gps_test_rec/0811/"
+# name = "fixPr_prPrec_1_0811fw2_gps.log"
+
 # path = "/home/kwq/gps_test/0602/"
 # name = "3_qfn8_fixPR_morePATH_pwr125_135.log"
 TGT_CHL = 8
