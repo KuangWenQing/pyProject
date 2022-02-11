@@ -259,17 +259,17 @@ lon = convert_ll_to_float("10618.06034")'''
 lat = convert_ll_to_float("2936.33509")
 lon = convert_ll_to_float("10618.09311")'''
 
-"""alt = 100     # 模拟器
+alt = 100     # 模拟器
 lat = convert_ll_to_float("4000.00001")
-lon = convert_ll_to_float("11600.00001")"""
+lon = convert_ll_to_float("11600.00001")
 """
 alt = 335.86     # 工位窗户 椭球高
 lat = convert_ll_to_float("2936.16018")
 lon = convert_ll_to_float("10618.02486")
 """
-alt = 333.4     #
-lat = convert_ll_to_float("2936.147948")
-lon = convert_ll_to_float("10618.05316")
+# alt = 333.4     #
+# lat = convert_ll_to_float("2936.147948")
+# lon = convert_ll_to_float("10618.05316")
 
 
 Tlla = (lat, lon, alt)              # 度 （纬经高）

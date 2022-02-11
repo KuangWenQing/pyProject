@@ -59,6 +59,8 @@ def ubx_process(path_file: str):
                                 error_bits += 1
                             else:
                                 total_bits += 1
+                    else:
+                        total_bits += 24
         else:
             stop_run = True
             event.set()
@@ -66,14 +68,16 @@ def ubx_process(path_file: str):
 
 
 if __name__ == '__main__':
-    path = r"D:\work\temp\1028" + "\\"
+    path = r"/home/kwq/tmp/kwq/"
     ubx_file = "COM3_211028_042604_M8T.ubx"
     simulator_file = r"中央公园广场.RSIM_(M1B1-GPS_L1)_RawNav(20211028-1225).dat.TXT"
 
+    time_start = time.time()
     sim = Thread(target=simulate_process, args=(path + simulator_file, ))
     ubx = Thread(target=ubx_process, args=(path + ubx_file, ))
     sim.start()
     ubx.start()
     sim.join()
     ubx.join()
-    print("symbol error rate = {:.2%}".format(error_bits / total_bits))
+    print("error_bits = {}, total_bits = {}, symbol error rate = {:.2%}".format(error_bits, total_bits, error_bits / total_bits))
+    print("used time = {:.3f}s".format(time.time() - time_start))

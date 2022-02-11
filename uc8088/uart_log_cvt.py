@@ -96,7 +96,7 @@ def parse_log(line, key):
 def cvt_uart_log(file):
     file_new = file[:-3] + 'rep'
     with open(file_new, 'w') as f_new:
-        with open(file, 'r') as f_ori:
+        with open(file, 'r', errors="ignore") as f_ori:
             for line in f_ori:
                 tgt_key = None
                 for item in rep_filed_needs:
@@ -116,10 +116,11 @@ def cvt_uart_log(file):
 
 if __name__ == "__main__":
     # fdir = "/home/htang/gps_test_rec/1021/log0/"
-    fdir = "/home/ucchip/KWQ/gps_test/1222/"
-    file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and ("-13" in f)]
+    # fdir = "/home/kwq/work/lab_test/2022/0108/cold_start/"
+    fdir = "/home/kwq/work/lab_test/2022/0114/"
+    file_list = [f for f in os.listdir(fdir) if f.endswith('.log')]  # and ("-13" in f)]
     for file in file_list:
-        if os.path.exists(fdir + file[:-3] + "rep"):
-            continue
+        # if os.path.exists(fdir + file[:-3] + "rep"):
+        #     continue
         print(file)
         cvt_uart_log(fdir+file)
