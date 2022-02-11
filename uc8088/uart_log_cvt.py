@@ -75,7 +75,7 @@ def parse_log(line, key):
         if key == 'ACQ SP':
             accidx = accidx + line[accidx:].index(',') + 1
         val = get_int_from_str(line[accidx:], len(rep_field_dict[key]['hexfmt']), ',',
-                         rep_field_dict[key]['hexfmt'][0])
+                         rep_field_dict[key]['hexfmt'][it])
         for skey in rep_field_dict[key].keys():
             if skey != 'ncom' and skey != 'hexfmt':
                 if rep_field_dict[key][skey][0] == it:
@@ -123,6 +123,14 @@ if __name__ == "__main__":
 
     # fdir = "/home/ucchip/KWQ/gps_test/1230/"
     # file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and ("3_m" in f)]
+
+    # fdir = "/home/ucchip/work/2022/0114/"
+    # fdir = "/home/ucchip/KWQ/gps_test/2022/0124/"
+    # file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and "atTst_5" in f]  # and ("" not in f and "14_m" not in f)]
+    # file_list = ["3_mdl_TCXO_pr_accuracy_test_220119152457.log"]
+    # fdir = "/home/ucchip/KWQ/gps_test/1230/"
+    # file_list = [f for f in os.listdir(fdir) if f.endswith('.log')]
+
 
     for file in file_list:
         # if os.path.exists(fdir + file[:-3] + "rep"):

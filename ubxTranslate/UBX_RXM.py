@@ -74,7 +74,7 @@ def get_raw_word_from_ubx(dir_file: str, GNSS_SYS=GPS_ID):
                 yield svID, word_lst
         elif msg is False:
             fd.close()
-            sys.exit()
+            yield None, None
 
 
 def get_epoch_RAWX_from_ubx(stream, GNSS_SYS = GPS_ID) -> dict:
