@@ -287,9 +287,9 @@ if __name__ == "__main__":
     # extract_tgt(fpath)
     # eva_bit_syn_err()
 
-    fdir = "/home/ucchip/KWQ/gps_test/2022/0115/"
+    fdir = "/home/ucchip/KWQ/gps_test/2022/0121/"
     # file_list = [f for f in os.listdir(fdir) if f.endswith('.rep') and "-13" in f]  # and ("-13" in f or "-125" in f) and f.startswith("2")]
-    file_list = [f for f in os.listdir(fdir) if f.endswith('.log') and ("13_m" not in f and "14_m" not in f)]
+    file_list = [f for f in os.listdir(fdir) if f.endswith('.rep') and "mdl" in f and ("13_m" not in f and "14_m" not in f)]
     # file_list = ["20_mdl_new8_acqThre_nct26coh9_-143_gps_dopp10_10_0_0_para83_69_42_22_0_19_12_1_10_32_1163918_rxsc16_SLVL3.log"]
     file_list.sort()
     for file in file_list:

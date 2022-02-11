@@ -91,9 +91,15 @@ def uc8088_process(path_file: str):
 if __name__ == "__main__":
     # path = r"D:\work\lab_test\gnss_acq_parameter_test\1111" + "\\"
     # path = r"/home/ucchip/KWQ/gps_test/1208/"
-    path = r"/home/ucchip/KWQ/gps_test/2022/0115/"
+    path = r"/home/ucchip/KWQ/gps_test/2022/0121/"
     # file_8088_lst = [f for f in os.listdir(path) if f.endswith("log") and (f.startswith("32") or f.startswith("31") or f.startswith("30") or f.startswith("29"))]
-    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log")]
+    file_8088_lst = [f for f in os.listdir(path) if f.endswith("log")]  # and ("5_mdl" in f or "6_mdl" in f or "7_mdl" in f or "8_mdl" in f)]
+    # file_8088_lst = [
+    #     "1_mdl_new_acqThre_coh9nct26_-147_gps_dopp10_10_-2_0_para83_75_42_23_0_15_12_1_10_32_1153918_rxsc16_SLVL3_220114121357.log",
+    #     "2_mdl_TCXO_acqThre_coh9nct26_-147_gps_dopp10_10_-2_0_para83_75_42_23_0_15_12_1_10_32_1153918_rxsc16_SLVL3_220114121357.log",
+    #     "3_mdl_new_acqThre_coh9nct26_-147_gps_dopp10_10_-2_0_para83_75_42_23_0_15_12_1_10_32_1163918_rxsc16_SLVL3_220114121357.log",
+    #     "4_mdl_TCXO_acqThre_coh9nct26_-147_gps_dopp10_10_-2_0_para83_75_42_23_0_15_12_1_10_32_1163918_rxsc16_SLVL3_220114121357.log"
+    # ]
 
     # path = r"/home/ucchip/KWQ/gps_test/1221/"
     # path = r"/home/ucchip/KWQ/gps_test/2022/0105/raw_error_rate_-151/"
@@ -107,6 +113,7 @@ if __name__ == "__main__":
     dir_sim_file = r"/home/ucchip/KWQ/gps_test/fix_pr_1e7.RSIM_(M1B1-GPS_L1)_RawNav(20211116-1959).dat.TXT"  # small
     # dir_sim_file = r"/home/ucchip/KWQ/gps_test/fixpr_0gap.RSIM_(M4B1-GPS_L1)_RawNav(20211209-1955).dat.TXT"    # big
     for file in file_8088_lst:
+        print(file)
         g_dd, g_sow = {}, 0
         err_bits, data_bits, err_word, err_word_Misjudgment, stop_run = 0, 0, 0, 0, 0
         sim = Thread(target=simulate_process, args=(dir_sim_file, 518400))
@@ -117,7 +124,6 @@ if __name__ == "__main__":
         sim.join()
         ubx.join()
 
-        print(file)
         if data_bits:
             print("err_bits = {:d}  data_bits = {:d}  error bits rate = {:.3%}"
                   .format(err_bits, data_bits, err_bits / data_bits))

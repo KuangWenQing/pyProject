@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 
 #path = "/home/jqiu/gps_test_log/0114/"
 #path = "/home/jqiu/share/th_tmp/"
-path = "/home/ucchip/KWQ/gps_test/2022/0117/"
-name = "1_loop_parame.log"
+path = "/home/ucchip/KWQ/gps_test/2022/0119/"
+name = "4_mdl_TCXO_220119152457_trkLP.log"
 # path = "/home/kwq/gps_test/0602/"
 # name = "3_qfn8_fixPR_morePATH_pwr125_135.log"
 TGT_CHL = 8

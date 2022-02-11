@@ -204,6 +204,7 @@ if __name__ == '__main__':
 
     sim = Process(target=simulate_process, args=(path + simulator_file,))
     ubx = Process(target=ubx_process, args=(path + ubx_file,))
+
     sim.start()
     ubx.start()
     sim.join()
