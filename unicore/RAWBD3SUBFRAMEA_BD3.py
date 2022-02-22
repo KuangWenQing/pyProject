@@ -1,6 +1,8 @@
 from simulator.SIM_Raw import get_epoch_raw_from_simulator
 import threading
 import os, sys
+import logging
+logging.basicConfig(level=logging.INFO, format='%(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 GPS_SYS = 0
 BDS_SYS = 3
@@ -8,7 +10,7 @@ BDS_SYS = 3
 total_bits = 0
 error_bits = 0
 semaphore = threading.Semaphore(0)
-event = threading.Event()
+condition = threading.Condition()
 g_dd = {}
 g_sow = 0
 stop_run = False
@@ -34,7 +36,10 @@ def get_sow_from_origin_raw(raw_int: int):
 
 
 def hxxt_process(path_file):
-    global g_dd, g_sow, event, error_bits, total_bits, stop_run
+    global g_dd, g_sow, error_bits, total_bits, stop_run
+    condition.acquire()  # 尝试获得锁， 没有获得就阻塞在此
+    print('HXXT_process start')
+    semaphore.release()  # 释放 信号量
     with open(path_file) as fd:
         for row in fd:
             if not row.startswith("#RAWBD3SUBFRAMEA"):
@@ -47,13 +52,16 @@ def hxxt_process(path_file):
             raw_str = info[4]
             origin_raw_int = raw_str_to_origin_raw(raw_str)
             sow = get_sow_from_origin_raw(origin_raw_int)
-            while sow > g_sow:
-                event.set()
-                semaphore.acquire()  # 等待 信号量
-                if stop_run:
-                    sys.exit()
-                event.clear()
 
+            while sow > g_sow:
+                condition.acquire()
+                # semaphore.release()  # 释放信号量
+                logging.debug("sow = {}".format(sow))
+                condition.notify()  # 提醒其它线程有锁将要释放
+                condition.wait()
+                if stop_run:
+                    break
+                condition.release()  # 释放锁
             if sow < g_sow:
                 continue
             else:
@@ -77,32 +85,41 @@ def hxxt_process(path_file):
                             total_bits += 1
                 else:
                     total_bits += 816
+            if stop_run:
+                break
     stop_run = True
-    event.set()
 
 
 def simulate_process(path_file: str, begin_time=518400000):
-    global g_dd, g_sow, event, stop_run
+    global g_dd, g_sow, stop_run
     if not os.path.exists(path_file):
+        print("No such file :: ", path_file)
         sys.exit(-1)
+    semaphore.acquire()  # 等待获取信号量
     fd = open(path_file, 'r')
-    print('simulate_process star')
+    print('simulate_process start')
+    condition.acquire()  # 尝试获得锁， 没有获得就阻塞在此
     for dd in get_epoch_raw_from_simulator(fd, begin_time, BDS_SYS):
-        event.wait()  # 等待事件
+        # semaphore.acquire()  # 等待获取信号量
+        condition.acquire()  # 尝试获得锁， 没有获得就阻塞在此
         if stop_run:
-            sys.exit()
+            break
         key_list = list(dd.keys())
         g_sow = dd[key_list[0]][0]
-
         g_dd = dd
-        semaphore.release()  # 释放 信号量
+        logging.debug("g_sow = {}".format(g_sow))
+        condition.notify()  # 提醒其它线程有锁将要释放
+        condition.wait()
+        condition.release()  # 释放锁
+    fd.close()
     stop_run = True
-    semaphore.release()  # 释放 信号量
+    condition.notify()   # 提醒其它线程有锁将要释放
+    condition.release()  # 释放 信号量
 
 
 if __name__ == "__main__":
-    path = r"E:\work\UPrecise_log\1118" + "\\"
-    sim_file = r"E:\work\simulate\user_fix.rsim_(M3B1-BD2_B1C2)_RawNav(20211113-1106).dat.TXT"
+    path = r"D:\work\temp\1118" + "\\"
+    sim_file = r"D:\work\temp\simulate\user_fix.rsim_(M3B1-BD2_B1C2)_RawNav(20211113-1106).dat.TXT"
     hxxt_file = "2_b1c_raw_power30dB.log"
 
     sim = threading.Thread(target=simulate_process, args=(sim_file, 86418000))
@@ -111,4 +128,5 @@ if __name__ == "__main__":
     hxxt.start()
     sim.join()
     hxxt.join()
-    print("symbol error rate = {:.2%}".format(error_bits / total_bits))
+    print("error_bits = {}, total_bits = {}, symbol error rate = {:.2%}".
+          format(error_bits, total_bits, error_bits / total_bits))

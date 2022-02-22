@@ -13,10 +13,11 @@ from base_function import Txyz
 T_speed = 0         # 速度 m/s
 chart = 1
 
-path = r"D:\temp\1115" + "\\"
-path = r"/home/kwq/work/east_window/1211/"
-file_list = [f for f in os.listdir(path) if f.endswith('.log')]
-# file_list = ['1_lg_211211101225_.txt']
+# path = r"D:\temp\1115" + "\\"
+# path = r"/home/kwq/work/east_window/1211/"
+path = r"/home/kwq/gps_test/2022/0210/"
+# file_list = [f for f in os.listdir(path) if f.endswith('.log')]
+file_list = ['2_md5_220210170616_navTst_0210fw_forDataSheet_dbgOn_flat.log']
 
 if __name__ == "__main__":
     head_xlsx = [[' ', 'ave', '50%', '95%', 'std', 'cnt']]
@@ -136,56 +137,55 @@ if __name__ == "__main__":
         plt.legend()  # 不加该语句无法显示 label
         if chart:
             plt.savefig(path + "chart/" + file[:-4] + "_dis_ENU.png")
+        sort_all_dis_xyz = np.sort(all_dis_xyz)
+        len_tmp = len(sort_all_dis_xyz)
+        dis_xyz_50 = round(sort_all_dis_xyz[int(len_tmp*0.5)], 3)
+        dis_xyz_95 = round(sort_all_dis_xyz[int(len_tmp*0.95)], 3)
+        dis_xyz_mean = round(np.mean(all_dis_xyz), 3)
+        dis_xyz_std = round(np.std(all_dis_xyz), 3)
+        dis_xyz_write = ["xyz坐标距离", dis_xyz_mean, dis_xyz_50, dis_xyz_95, dis_xyz_std, len_tmp]
+        print("           , mean , cep50 , cep95 , std , cnt")
+        print("xyz坐标距离 {:^6}, {:^6}, {:^6}, {:^6}, {: d}".format(dis_xyz_mean,  dis_xyz_50, dis_xyz_95, dis_xyz_std, len_tmp))
+
+        sort_all_dis_ENU = np.sort(all_dis_ENU)
+        len_tmp = len(sort_all_dis_ENU)
+        dis_ENU_50 = round(sort_all_dis_ENU[int(len_tmp*0.5)], 3)
+        dis_ENU_95 = round(sort_all_dis_ENU[int(len_tmp * 0.95)], 3)
+        dis_ENU_mean = round(np.mean(all_dis_ENU), 3)
+        dis_ENU_std = round(np.std(all_dis_ENU), 3)
+        dis_ENU_write = ["东北天", dis_ENU_mean, dis_ENU_50, dis_ENU_95, dis_ENU_std, len_tmp]
+        print("东北天      {:^6}, {:^6}, {:^6}, {:^6}, {: d}".format(dis_ENU_mean, dis_ENU_50, dis_ENU_95, dis_ENU_std, len_tmp))
+
+        sort_all_dis_EN = np.sort(all_dis_EN)
+        len_tmp = len(sort_all_dis_EN)
+        dis_EN_50 = round(sort_all_dis_EN[int(len_tmp * 0.5)], 3)
+        dis_EN_95 = round(sort_all_dis_EN[int(len_tmp * 0.95)], 3)
+        dis_EN_mean = round(np.mean(all_dis_EN), 3)
+        dis_EN_std = round(np.std(all_dis_EN), 3)
+        dis_EN_write = ["东北", dis_EN_mean, dis_EN_50, dis_EN_95, dis_EN_std, len_tmp]
+        print("东北       {:^6}, {:^6}, {:^6}, {:^6}, {: d}".format(dis_EN_mean, dis_EN_50, dis_EN_95, dis_EN_std, len_tmp))
+        plt.figure()
+        plt.title("CEP")
+        len_tmp = len(sort_all_dis_EN)
+        plt.xlabel("err (m)")
+        plt.ylabel("per")
+        plt.plot(sort_all_dis_EN, [(y+1)/len_tmp for y in range(len_tmp)], marker='x')
+        plt.plot(sort_all_dis_EN, [0.95 for y in range(len_tmp)], linestyle="--", label='95%')
+        plt.plot(sort_all_dis_EN, [0.50 for y in range(len_tmp)], linestyle="--", label='50%')
+        plt.legend()  # 不加该语句无法显示 label
         if chart:
-            sort_all_dis_xyz = np.sort(all_dis_xyz)
-            len_tmp = len(sort_all_dis_xyz)
-            dis_xyz_50 = round(sort_all_dis_xyz[int(len_tmp*0.5)], 3)
-            dis_xyz_95 = round(sort_all_dis_xyz[int(len_tmp*0.95)], 3)
-            dis_xyz_mean = round(np.mean(all_dis_xyz), 3)
-            dis_xyz_std = round(np.std(all_dis_xyz), 3)
-            dis_xyz_write = ["xyz坐标距离", dis_xyz_mean, dis_xyz_50, dis_xyz_95, dis_xyz_std, len_tmp]
-            print("           , mean , cep50 , cep95 , std , cnt")
-            print("xyz坐标距离 {:^6}, {:^6}, {:^6}, {:^6}, {: d}".format(dis_xyz_mean,  dis_xyz_50, dis_xyz_95, dis_xyz_std, len_tmp))
+            plt.savefig(path + "chart/" + file[:-4] + "_perc.png")
 
-            sort_all_dis_ENU = np.sort(all_dis_ENU)
-            len_tmp = len(sort_all_dis_ENU)
-            dis_ENU_50 = round(sort_all_dis_ENU[int(len_tmp*0.5)], 3)
-            dis_ENU_95 = round(sort_all_dis_ENU[int(len_tmp * 0.95)], 3)
-            dis_ENU_mean = round(np.mean(all_dis_ENU), 3)
-            dis_ENU_std = round(np.std(all_dis_ENU), 3)
-            dis_ENU_write = ["东北天", dis_ENU_mean, dis_ENU_50, dis_ENU_95, dis_ENU_std, len_tmp]
-            print("东北天      {:^6}, {:^6}, {:^6}, {:^6}, {: d}".format(dis_ENU_mean, dis_ENU_50, dis_ENU_95, dis_ENU_std, len_tmp))
+        sort_all_speed = np.sort(all_speed)
+        len_tmp = len(sort_all_speed)
+        speed_50 = round(sort_all_speed[int(len_tmp * 0.5)], 3)
+        speed_95 = round(sort_all_speed[int(len_tmp * 0.95)], 3)
+        speed_mean = round(np.mean(all_speed), 4)
+        speed_std = round(np.std(all_speed), 4)
+        speed_write = ["speed", speed_mean, speed_50, speed_95, speed_std, len_tmp]
+        print("speed     {:^6}, {:^6}, {:^6}, {:^6}, {: d}".format(speed_mean, speed_50, speed_95, speed_std, len_tmp))
 
-            sort_all_dis_EN = np.sort(all_dis_EN)
-            len_tmp = len(sort_all_dis_EN)
-            dis_EN_50 = round(sort_all_dis_EN[int(len_tmp * 0.5)], 3)
-            dis_EN_95 = round(sort_all_dis_EN[int(len_tmp * 0.95)], 3)
-            dis_EN_mean = round(np.mean(all_dis_EN), 3)
-            dis_EN_std = round(np.std(all_dis_EN), 3)
-            dis_EN_write = ["东北", dis_EN_mean, dis_EN_50, dis_EN_95, dis_EN_std, len_tmp]
-            print("东北       {:^6}, {:^6}, {:^6}, {:^6}, {: d}".format(dis_EN_mean, dis_EN_50, dis_EN_95, dis_EN_std, len_tmp))
-            plt.figure()
-            plt.title("CEP")
-            len_tmp = len(sort_all_dis_EN)
-            plt.xlabel("err (m)")
-            plt.ylabel("per")
-            plt.plot(sort_all_dis_EN, [(y+1)/len_tmp for y in range(len_tmp)], marker='x')
-            plt.plot(sort_all_dis_EN, [0.95 for y in range(len_tmp)], linestyle="--", label='95%')
-            plt.plot(sort_all_dis_EN, [0.50 for y in range(len_tmp)], linestyle="--", label='50%')
-            plt.legend()  # 不加该语句无法显示 label
-            if chart:
-                plt.savefig(path + "chart/" + file[:-4] + "_perc.png")
-
-            sort_all_speed = np.sort(all_speed)
-            len_tmp = len(sort_all_speed)
-            speed_50 = round(sort_all_speed[int(len_tmp * 0.5)], 3)
-            speed_95 = round(sort_all_speed[int(len_tmp * 0.95)], 3)
-            speed_mean = round(np.mean(all_speed), 4)
-            speed_std = round(np.std(all_speed), 4)
-            speed_write = ["speed", speed_mean, speed_50, speed_95, speed_std, len_tmp]
-            print("speed     {:^6}, {:^6}, {:^6}, {:^6}, {: d}".format(speed_mean, speed_50, speed_95, speed_std, len_tmp))
-
-            row_xlsx = write_excel_xlsx(ws, [dis_xyz_write, dis_ENU_write, dis_EN_write, speed_write], row_xlsx)
+        row_xlsx = write_excel_xlsx(ws, [dis_xyz_write, dis_ENU_write, dis_EN_write, speed_write], row_xlsx)
         plt.show()
     fp.close()
 

@@ -31,7 +31,7 @@ def bit_synchro_check(dir_path_: str):
         for key in dd.keys():
             per_sec_pr.append(dd[key].prMes)
             total_PR += 1
-        while max(per_sec_pr) - min(per_sec_pr) > 18:
+        while max(per_sec_pr) - min(per_sec_pr) > 5:
             error_PR += 1
             abnorma_idx = find_the_abnormal_items_idx(per_sec_pr)
             per_sec_pr.pop(abnorma_idx)
@@ -42,5 +42,7 @@ def bit_synchro_check(dir_path_: str):
 
 
 if __name__ == "__main__":
-    path_file = r"/home/kwq/work/lab_test/1231/ReceivedTofile-COM3-2021-12-31_15-14-26_pwr144_fixPr.DAT"
+    path_file = r"/home/kwq/work/lab_test/1231/ReceivedTofile-COM3-2022-1-4_10-34-28_pwr145_fixPr.DAT"
+    # path_file = r"/home/kwq/work/lab_test/1231/ReceivedTofile-COM3-2021-12-31_15-14-26_pwr144_fixPr.DAT"
+    # path_file = r"/home/kwq/work/lab_test/1231/ReceivedTofile-COM3-2021-12-31_10-41-34_pwr143_fixPr.ubx"
     bit_synchro_check(path_file)
