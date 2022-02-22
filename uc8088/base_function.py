@@ -267,9 +267,16 @@ alt = 335.86     # 工位窗户 椭球高
 lat = convert_ll_to_float("2936.16018")
 lon = convert_ll_to_float("10618.02486")
 """
-alt = 333.4     #
+
+"""alt = 333.4     # 东边窗户 OK
 lat = convert_ll_to_float("2936.147948")
 lon = convert_ll_to_float("10618.05316")
+"""
+
+
+alt = 360.4     # 顶楼天线 OK
+lat = convert_ll_to_float("2936.15870")
+lon = convert_ll_to_float("10618.04372")
 
 
 Tlla = (lat, lon, alt)              # 度 （纬经高）
