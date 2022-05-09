@@ -1,3 +1,6 @@
 .idea
 tmp.txt
 __pycache__
+*_temp_main.py
+*tmp_test*
+*temp_test*

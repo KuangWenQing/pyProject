@@ -222,8 +222,8 @@ def eva_bit_syn_err():
                         print("CAN NOT FIND BIT SYN ERR CHL", file=fd_ab)
                     else:
                         print("TRK AB CHL {}, row {}".format(trk_ab_chl_lst, rowidx), file=fd_ab)
-                # if len(bit_err_chl_lst):
-                #     print('s')
+                if len(bit_err_chl_lst):
+                    print('s')
                 bit_syn_err.append([rowidx, len(fsyn_pr_lst), len(bit_err_chl_lst), len(trk_ab_chl_lst)])
                 bit_stuck_chl = bit_syn_stuck_judge(bit_syn_cnt, fsyn_chl_lst)
                 if bit_stuck_chl:
